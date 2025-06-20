@@ -14,7 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class User {
 
-    private Long id;
+    private int id;
 
     @NotBlank(message = "Email не может быть пустым")
     @Email(message = "Некорректный формат email")
@@ -29,7 +29,16 @@ public class User {
     @Past(message = "Дата рождения должна быть в прошлом")
     private LocalDate birthday;
 
-    private Set<Long> friends = new HashSet<>();
+    private Set<Long> friends;
+
+    public User(int id, String email, String login, String name, LocalDate birthday) {
+        this.id = id;
+        this.email = email;
+        this.login = login;
+        this.name = name;
+        this.birthday = birthday;
+        this.friends = new HashSet<>();
+    }
 
     public String getName() {
         return (name == null || name.isBlank()) ? login : name;

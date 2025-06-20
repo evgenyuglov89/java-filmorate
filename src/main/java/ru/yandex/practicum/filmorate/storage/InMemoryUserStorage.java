@@ -11,8 +11,8 @@ import java.util.*;
 @Slf4j
 @Component
 public class InMemoryUserStorage implements UserStorage {
-    private final Map<Long, User> users = new HashMap<>();
-    private Long currentId = 1L;
+    private final Map<Integer, User> users = new HashMap<>();
+    private int currentId = 1;
 
     @Override
     public User save(User user) {
@@ -24,7 +24,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        Long id = user.getId();
+        int id = user.getId();
 
         if (!users.containsKey(id)) {
             log.warn("Попытка обновить несуществующего пользователя с ID: {}", user.getId());

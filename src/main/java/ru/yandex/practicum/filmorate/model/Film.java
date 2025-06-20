@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.model;
 
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -18,7 +17,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class Film {
 
-    private Long id;
+    private int id;
 
     @NotBlank(message = "Название фильма не может быть пустым")
     private String name;
@@ -32,5 +31,14 @@ public class Film {
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private int duration;
 
-    private Set<Long> likes = new HashSet<>();
+    private Set<Long> likes;
+
+    public Film(int id, String name, String description,LocalDate releaseDate, int duration) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.likes = new HashSet<>();
+    }
 }

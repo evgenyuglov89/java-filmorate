@@ -11,8 +11,8 @@ import java.util.*;
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private final Map<Long, Film> films = new HashMap<>();
-    private Long currentId = 1L;
+    private final Map<Integer, Film> films = new HashMap<>();
+    private int currentId = 1;
 
     @Override
     public Film save(Film film) {
@@ -24,7 +24,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        Long id = film.getId();
+        int id = film.getId();
 
         if (!films.containsKey(id)) {
             log.warn("Попытка обновить несуществующий фильм с ID: {}", id);
