@@ -1,52 +1,59 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
-@Slf4j
 public class UserController {
 
-    private final List<User> users = new ArrayList<>();
-    private int currentId = 1;
+    private final UserStorage userStorage;
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserStorage userStorage, UserService userService) {
+        this.userStorage = userStorage;
+        this.userService = userService;
+    }
 
     @PostMapping
-    public User createUser(@Valid @RequestBody User user) {
-        user.setId(currentId++);
-        users.add(user);
-        log.info("Создан пользователь: {}", user);
-        return user;
+    public User create(@Valid @RequestBody User user) {
+        return userStorage.save(user);
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
-        Optional<User> existingUser = users.stream()
-                .filter(u -> u.getId() == user.getId())
-                .findFirst();
-
-        if (existingUser.isEmpty()) {
-            log.warn("Попытка обновить несуществующего пользователя с ID: {}", user.getId());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
-        }
-
-        users.removeIf(u -> u.getId() == user.getId());
-        users.add(user);
-        log.info("Обновлён пользователь: {}", user);
-        return user;
+    public User update(@Valid @RequestBody User user) {
+        return userStorage.update(user);
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        log.info("Получен список всех пользователей ({} шт.)", users.size());
-        return users;
+    public List<User> usersList() {
+        return userStorage.usersList();
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.removeFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable Long id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 }

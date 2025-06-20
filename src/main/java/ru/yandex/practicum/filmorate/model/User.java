@@ -6,13 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
 
-    private int id;
+    private Long id;
 
     @NotBlank(message = "Email не может быть пустым")
     @Email(message = "Некорректный формат email")
@@ -26,6 +28,8 @@ public class User {
 
     @Past(message = "Дата рождения должна быть в прошлом")
     private LocalDate birthday;
+
+    private Set<Long> friends = new HashSet<>();
 
     public String getName() {
         return (name == null || name.isBlank()) ? login : name;
