@@ -11,5 +11,5 @@ public interface FilmStorage {
 
     List<Film> filmsList();
 
-    Film findById(Long id);
+    Film findById(int id);
 }

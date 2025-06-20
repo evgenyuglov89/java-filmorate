@@ -22,7 +22,7 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public void addFriend(Long userId, Long friendId) {
+    public void addFriend(int userId, int friendId) {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("addFriend не найден пользователь с ID: {}", userId);
@@ -44,7 +44,7 @@ public class UserService {
         log.info("Был добавлен друг с ID: {} пользователю с ID: {}", friendId, userId);
     }
 
-    public void removeFriend(Long userId, Long friendId) {
+    public void removeFriend(int userId, int friendId) {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("removeFriend не найден пользователь с ID: {}", userId);
@@ -66,7 +66,7 @@ public class UserService {
         log.info("Был удален друг с ID: {} у пользователя с ID: {}", friendId, userId);
     }
 
-    public List<User> getFriends(Long userId) {
+    public List<User> getFriends(int userId) {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("getFriends не найден пользователь с ID: {}", userId);
@@ -78,9 +78,9 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public List<User> getCommonFriends(Long userId, Long otherId) {
-        Set<Long> userFriends = userStorage.findById(userId).getFriends();
-        Set<Long> otherFriends = userStorage.findById(otherId).getFriends();
+    public List<User> getCommonFriends(int userId, int otherId) {
+        Set<Integer> userFriends = userStorage.findById(userId).getFriends();
+        Set<Integer> otherFriends = userStorage.findById(otherId).getFriends();
         log.info("Был возвращён список общих друзей у пользователя с ID: {} и пользователя с ID: {}", userId, otherId);
         return userFriends.stream()
                 .filter(otherFriends::contains)

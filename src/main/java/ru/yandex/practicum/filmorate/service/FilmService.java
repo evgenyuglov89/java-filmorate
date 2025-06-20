@@ -26,7 +26,7 @@ public class FilmService {
         this.userStorage = userStorage;
     }
 
-    public void likeFilm(Long filmId, Long userId) {
+    public void likeFilm(int filmId, int userId) {
         Film film = filmStorage.findById(filmId);
         if (film == null) {
             log.warn("likeFilm не найден фильм с ID: {}", filmId);
@@ -42,7 +42,7 @@ public class FilmService {
         log.info("Был поставлен лайк фильму с ID: {} пользователем с ID: {}", filmId, userId);
     }
 
-    public void removeLike(Long filmId, Long userId) {
+    public void removeLike(int filmId, int userId) {
         Film film = filmStorage.findById(filmId);
         if (film == null) {
             log.warn("removeLike не найден фильм с ID: {}", filmId);

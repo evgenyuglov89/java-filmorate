@@ -29,7 +29,7 @@ public class User {
     @Past(message = "Дата рождения должна быть в прошлом")
     private LocalDate birthday;
 
-    private Set<Long> friends;
+    private Set<Integer> friends = new HashSet<>();
 
     public User(int id, String email, String login, String name, LocalDate birthday) {
         this.id = id;
