@@ -2,9 +2,8 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -36,7 +35,7 @@ public class FilmService {
         Film existingFilm = filmStorage.findById(id);
         if (existingFilm == null) {
             log.warn("Попытка обновить несуществующий фильм с ID: {}", id);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с ID " + id + " не найден");
+            throw new NotFoundException("Фильм с ID " + id + " не найден");
         }
 
         return filmStorage.update(film);
@@ -50,12 +49,12 @@ public class FilmService {
         Film film = filmStorage.findById(filmId);
         if (film == null) {
             log.warn("likeFilm не найден фильм с ID: {}", filmId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с ID " + filmId + " не найден");
+            throw new NotFoundException("Фильм с ID " + filmId + " не найден");
         }
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("likeFilm не найден пользователь с ID: {}", userId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
         film.getLikes().add(userId);
         filmStorage.update(film);
@@ -66,12 +65,12 @@ public class FilmService {
         Film film = filmStorage.findById(filmId);
         if (film == null) {
             log.warn("removeLike не найден фильм с ID: {}", filmId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с ID " + filmId + " не найден");
+            throw new NotFoundException("Фильм с ID " + filmId + " не найден");
         }
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("removeLike не найден пользователь с ID: {}", userId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
         film.getLikes().remove(userId);
         filmStorage.update(film);

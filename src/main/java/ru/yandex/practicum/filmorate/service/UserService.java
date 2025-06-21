@@ -2,9 +2,8 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -32,7 +31,7 @@ public class UserService {
         User existingFilm = userStorage.findById(id);
         if (existingFilm == null) {
             log.warn("Попытка обновить несуществующего пользователя с ID: {}", user.getId());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
+            throw new NotFoundException("Пользователь не найден");
         }
 
         return userStorage.update(user);
@@ -46,13 +45,13 @@ public class UserService {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("addFriend не найден пользователь с ID: {}", userId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
         User friend = userStorage.findById(friendId);
         if (friend == null) {
             log.warn("addFriend не найден пользователь с ID: {}", friendId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + friendId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + friendId + " не найден");
         }
 
         user.getFriends().add(friendId);
@@ -68,13 +67,13 @@ public class UserService {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("removeFriend не найден пользователь с ID: {}", userId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
         User friend = userStorage.findById(friendId);
         if (friend == null) {
             log.warn("removeFriend не найден пользователь с ID: {}", friendId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + friendId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + friendId + " не найден");
         }
 
         user.getFriends().remove(friendId);
@@ -90,7 +89,7 @@ public class UserService {
         User user = userStorage.findById(userId);
         if (user == null) {
             log.warn("getFriends не найден пользователь с ID: {}", userId);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с ID " + userId + " не найден");
+            throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
         log.info("Был возвращён список друзей у пользователя с ID: {}", userId);
         return user.getFriends().stream()
