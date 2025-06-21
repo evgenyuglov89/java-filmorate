@@ -26,6 +26,26 @@ public class FilmService {
         this.userStorage = userStorage;
     }
 
+    public Film create(Film film) {
+        return filmStorage.save(film);
+    }
+
+    public Film update(Film film) {
+        int id = film.getId();
+
+        Film existingFilm = filmStorage.findById(id);
+        if (existingFilm == null) {
+            log.warn("Попытка обновить несуществующий фильм с ID: {}", id);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с ID " + id + " не найден");
+        }
+
+        return filmStorage.update(film);
+    }
+
+    public List<Film> filmsList() {
+        return filmStorage.filmsList();
+    }
+
     public void likeFilm(int filmId, int userId) {
         Film film = filmStorage.findById(filmId);
         if (film == null) {

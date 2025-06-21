@@ -1,9 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -24,14 +22,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        int id = user.getId();
-
-        if (!users.containsKey(id)) {
-            log.warn("Попытка обновить несуществующего пользователя с ID: {}", user.getId());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
-        }
-
-        users.put(id, user);
+        users.put(user.getId(), user);
         log.info("Обновлён пользователь: {}", user);
         return user;
     }

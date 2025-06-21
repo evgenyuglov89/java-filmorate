@@ -22,6 +22,26 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
+    public User create(User user) {
+        return userStorage.save(user);
+    }
+
+    public User update(User user) {
+        int id = user.getId();
+
+        User existingFilm = userStorage.findById(id);
+        if (existingFilm == null) {
+            log.warn("Попытка обновить несуществующего пользователя с ID: {}", user.getId());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден");
+        }
+
+        return userStorage.update(user);
+    }
+
+    public List<User> usersList() {
+        return userStorage.usersList();
+    }
+
     public void addFriend(int userId, int friendId) {
         User user = userStorage.findById(userId);
         if (user == null) {
