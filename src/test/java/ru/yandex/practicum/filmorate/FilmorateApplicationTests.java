@@ -24,7 +24,7 @@ import static org.assertj.core.groups.Tuple.tuple;
 @JdbcTest
 @Import(TestStorageConfig.class)
 @AutoConfigureTestDatabase
-class FilmoRateApplicationTests {
+class FilmorateApplicationTests {
 	private User user;
 	private User user2;
 	private Film film;
@@ -38,7 +38,7 @@ class FilmoRateApplicationTests {
 	private final JdbcTemplate jdbc;
 
 	@Autowired
-	public FilmoRateApplicationTests(
+	public FilmorateApplicationTests(
 			UserDbStorage userStorage,
 			FilmDbStorage filmStorage,
 			GenreDbStorage genreDbStorage,
