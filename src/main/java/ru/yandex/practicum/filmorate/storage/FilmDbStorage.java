@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Repository("dbFilmStorage")
 @RequiredArgsConstructor
-public class FilmDbStorage implements FilmStorage{
+public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
     private final FilmRowMapper mapper;
     private static final String GET_COUNT_FILMS_BY_ID =
