@@ -19,6 +19,7 @@ public class MpaService {
     public List<Mpa> mpaList() {
         return mpaDbStorage.mpaList();
     }
+
     public Mpa findById(int id) {
         return mpaDbStorage.findById(id);
     }

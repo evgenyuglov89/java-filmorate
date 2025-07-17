@@ -51,6 +51,7 @@ class FilmoRateApplicationTests {
 		this.mpaDbStorage = mpaDbStorage;
 		this.jdbc = jdbc;
 	}
+
 	@BeforeEach
 	void setUp() {
 		user = User.builder()
