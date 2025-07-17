@@ -28,6 +28,10 @@ public class FilmController {
     public Film update(@Valid @RequestBody Film film) {
         return filmService.update(film);
     }
+    @GetMapping("/{id}")
+    public Film getFilm(@PathVariable int id) {
+        return filmService.findById(id);
+    }
 
     @GetMapping
     public List<Film> filmsList() {

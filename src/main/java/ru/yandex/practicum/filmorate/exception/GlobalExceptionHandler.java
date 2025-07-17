@@ -15,4 +15,16 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleNotFound(NotFoundException ex) {
         return Map.of("error", ex.getMessage());
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleRuntimeException(RuntimeException ex) {
+        return Map.of("error", "Ошибка сервера: " + ex.getMessage());
+    }
+
+    @ExceptionHandler(FriendshipNotFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Map<String, String> handleFriendshipNotFound(FriendshipNotFoundException ex) {
+        return (Map.of("error", ex.getMessage()));
+    }
 }

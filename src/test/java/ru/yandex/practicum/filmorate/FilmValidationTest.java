@@ -4,6 +4,7 @@ import jakarta.validation.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -22,8 +23,13 @@ public class FilmValidationTest {
 
     @Test
     void shouldFailIfNameBlank() {
-        Film film = new Film(1, "", "desc",
-                LocalDate.of(2000, 1, 1), 100);
+        Film film = Film.builder()
+                .id(1)
+                .name("")
+                .description("desc")
+                .releaseDate(LocalDate.of(2000, 1, 1))
+                .duration(180)
+                .build();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("name")));
     }
@@ -31,32 +37,53 @@ public class FilmValidationTest {
     @Test
     void shouldFailIfDescriptionTooLong() {
         String longDescription = "a".repeat(201);
-        Film film = new Film(1, "Film", longDescription,
-                LocalDate.of(2000, 1, 1), 100);
+        Film film = Film.builder()
+                .id(1)
+                .name("Film")
+                .description(longDescription)
+                .releaseDate(LocalDate.of(2000, 1, 11))
+                .duration(100)
+                .build();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("description")));
     }
 
     @Test
     void shouldFailIfReleaseDateBefore1895() {
-        Film film = new Film(1, "Film", "desc",
-                LocalDate.of(1895, 12, 27), 100);
+        Film film = Film.builder()
+                .id(1)
+                .name("Film")
+                .description("desc")
+                .releaseDate(LocalDate.of(1895, 12, 27))
+                .duration(100)
+                .build();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("releaseDate")));
     }
 
     @Test
     void shouldFailIfDurationNotPositive() {
-        Film film = new Film(1, "Film", "desc",
-                LocalDate.of(2000, 1, 1), 0);
+        Film film = Film.builder()
+                .id(1)
+                .name("Film")
+                .description("desc")
+                .releaseDate(LocalDate.of(2000, 1, 11))
+                .duration(0)
+                .build();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("duration")));
     }
 
     @Test
     void shouldPassWithValidFilm() {
-        Film film = new Film(1, "Film", "desc",
-                LocalDate.of(2000, 1, 1), 100);
+        Film film = Film.builder()
+                .id(1)
+                .name("Film")
+                .description("desc")
+                .releaseDate(LocalDate.of(2000, 1, 1))
+                .duration(100)
+                .mpa(new Mpa(1, null, null))
+                .build();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
     }
