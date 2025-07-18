@@ -26,33 +26,45 @@ public class FilmDbStorage implements FilmStorage {
             "SELECT COUNT(*) FROM \"films\" WHERE \"id\" = ?";
     private static final String GET_COUNT_MPA_BY_ID =
             "SELECT COUNT(*) FROM \"mpa_rating\" WHERE \"id\" = ?";
-    private static final String GET_FILM_BY_ID =
-            "SELECT * FROM \"films\" WHERE \"id\" = ?";
+    private static final String GET_FILM_BY_ID = """
+            SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
+            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description"
+            FROM "films" f
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            WHERE f."id" = ?""";
     private static final String GET_LIKES_BY_FILM =
             "SELECT \"user_id\" FROM \"likes\" WHERE \"film_id\" = ?";
     private static final String GET_MPA_BY_FILM =
             "SELECT * FROM \"mpa_rating\" WHERE \"id\" = ?";
     private static final String GET_GENRES_BY_FILM_ID = """
-        SELECT g."id", g."name"
-        FROM "film_genres" fg
-        JOIN "genres" g ON fg."genre_id" = g."id"
-        WHERE fg."film_id" = ?
-        ORDER BY g."id"
-        """;
+            SELECT g."id", g."name"
+            FROM "film_genres" fg
+            JOIN "genres" g ON fg."genre_id" = g."id"
+            WHERE fg."film_id" = ?
+            ORDER BY g."id"
+            """;
     private static final String GET_ALL_FILMS = """
-        SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration", f."mpa_id"
-        FROM "films" f
-        LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-        """;
+            SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate",
+                f."duration",
+                m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description"
+            FROM "films" f
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            """;
     private static final String GET_POPULAR_FILMS = """
-        SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration", f."mpa_id",
-               COUNT(l."user_id") AS "likes_count"
-        FROM "films" f
-        LEFT JOIN "likes" l ON f."id" = l."film_id"
-        GROUP BY f."id"
-        ORDER BY "likes_count" DESC, f."id" ASC
-        LIMIT ?
-        """;
+            SELECT
+                f."id", f."name", f."description", f."release_date" AS "releaseDate",
+                f."duration",
+                m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                COUNT(l."user_id") AS "likes_count"
+            FROM "films" f
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            LEFT JOIN "likes" l ON f."id" = l."film_id"
+            GROUP BY
+                f."id", f."name", f."description", f."release_date", f."duration",
+                m."id", m."name", m."description"
+            ORDER BY "likes_count" DESC, f."id" ASC
+            LIMIT ?
+            """;
     private static final String INSERT_NEW_FILM =
             "INSERT INTO \"films\" (\"name\", \"description\", \"release_date\", \"duration\", \"mpa_id\") " +
                     "VALUES (?, ?, ?, ?, ?)";
@@ -96,9 +108,11 @@ public class FilmDbStorage implements FilmStorage {
                     .map(Genre::getId)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
 
-            for (Integer genreId : uniqueGenreIds) {
-                jdbc.update(INSERT_FILM_GENRES, film.getId(), genreId);
-            }
+            List<Object[]> batchArgs = uniqueGenreIds.stream()
+                    .map(genreId -> new Object[]{film.getId(), genreId})
+                    .toList();
+
+            jdbc.batchUpdate(INSERT_FILM_GENRES, batchArgs);
         }
 
         return film;
@@ -182,7 +196,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        List<Film> films = jdbc.query(GET_POPULAR_FILMS, mapper, count);
+        List<Film> films = jdbc.query(GET_POPULAR_FILMS, new Object[]{count}, mapper);
 
         for (Film film : films) {
             getGenresAndLikes(film);
