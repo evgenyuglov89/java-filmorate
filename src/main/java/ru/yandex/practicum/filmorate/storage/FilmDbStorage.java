@@ -77,6 +77,25 @@ public class FilmDbStorage implements FilmStorage {
                     "\"duration\" = ?, \"mpa_id\" = ? WHERE \"id\" = ?";
     private static final String DELETE_LIKE =
             "DELETE FROM \"likes\" WHERE \"film_id\" = ? AND \"user_id\" = ?";
+    private static final String SEARCH = """
+        SELECT
+            f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
+            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+        COUNT(l."user_id") AS "likes_count"
+        FROM "films" f
+        LEFT JOIN "film_directors" fd ON f."id" = fd."film_id"
+        LEFT JOIN "directors" d ON fd."director_id" = d."id"
+        LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+        LEFT JOIN "likes" l ON f."id" = l."film_id"
+        WHERE
+            (? /*searchByTitle*/    = TRUE  AND LOWER(f."name") LIKE LOWER(CONCAT('%', ?, '%')))
+        OR
+            (? /*searchByDirector*/ = TRUE  AND LOWER(d."name") LIKE LOWER(CONCAT('%', ?, '%')))
+        GROUP BY
+            f."id", f."name", f."description", f."release_date", f."duration",
+            m."id", m."name", m."description"
+        ORDER BY likes_count DESC
+        """;
 
     @Override
     public Film save(Film film) {
@@ -202,6 +221,16 @@ public class FilmDbStorage implements FilmStorage {
             getGenresAndLikes(film);
         }
 
+        return films;
+    }
+
+    @Override
+    public List<Film> search(String query, List<String> by) {
+        boolean byTitle    = by.contains("title");
+        boolean byDirector = by.contains("director");
+
+        List<Film> films = jdbc.query(SEARCH, mapper, byTitle, query, byDirector, query);
+        films.forEach(this::getGenresAndLikes);
         return films;
     }
 
