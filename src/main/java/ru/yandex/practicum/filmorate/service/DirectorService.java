@@ -15,23 +15,23 @@ public class DirectorService {
         this.directorDbStorage = directorDbStorage;
     }
 
-    public List<Director> directorsList(){
+    public List<Director> directorsList() {
         return directorDbStorage.direcrorsList();
     }
 
-    public Director findById(int id){
+    public Director findById(int id) {
         return directorDbStorage.findById(id);
     }
 
-    public Director createDirector(Director director){
+    public Director createDirector(Director director) {
         return directorDbStorage.createDirector(director);
     }
 
-    public Director updateDirector(Director director){
+    public Director updateDirector(Director director) {
         return directorDbStorage.updateDirector(director);
     }
 
-    public void removeDirector(int id){
+    public void removeDirector(int id) {
         directorDbStorage.removeDirector(id);
     }
 }
