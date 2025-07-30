@@ -24,20 +24,19 @@ public class DirectorDbStorage {
     private static final String INSERT_NEW_DIRECTOR = "INSERT INTO \"directors\" (\"name\") VALUES (?)";
     private static final String UPDATE_DIRECTOR = "UPDATE \"directors\" SET \"name\" = ? WHERE \"id\" = ?";
     private static final String DELETE_DIRECTOR = "DELETE FROM \"directors\" WHERE \"id\" = ?";
-
-    public List<Director> direcrorsList() {
-        return jdbcTemplate.query(GET_DIRECTORS, directorRowMapper);
+    public List<Director> direcrorsList(){
+        return jdbcTemplate.query(GET_DIRECTORS,directorRowMapper);
     }
 
-    public Director findById(int id) {
-        try {
-            return jdbcTemplate.queryForObject(GET_DIRECTOR_BY_ID, directorRowMapper, id);
-        } catch (EmptyResultDataAccessException e) {
+    public Director findById(int id){
+        try{
+            return jdbcTemplate.queryForObject(GET_DIRECTOR_BY_ID,directorRowMapper,id);
+        }catch (EmptyResultDataAccessException e){
             throw new NotFoundException("Director с id=" + id + " не найден");
         }
     }
 
-    public Director createDirector(Director director) {
+    public Director createDirector(Director director){
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
@@ -54,18 +53,18 @@ public class DirectorDbStorage {
         return director;
     }
 
-    public Director updateDirector(Director director) {
-        int rowsUpdated = jdbcTemplate.update(UPDATE_DIRECTOR, director.getName(), director.getId());
-        if (rowsUpdated == 0) {
-            throw new NotFoundException("Director c id=" + director.getId() + " не существует.");
+    public Director updateDirector(Director director){
+        int rowsUpdated = jdbcTemplate.update(UPDATE_DIRECTOR,director.getName(),director.getId());
+        if(rowsUpdated == 0){
+            throw new NotFoundException("Director c id="+director.getId()+" не существует.");
         }
         return director;
     }
 
-    public void removeDirector(int id) {
-        int rowsDeleted = jdbcTemplate.update(DELETE_DIRECTOR, id);
-        if (rowsDeleted == 0) {
-            throw new NotFoundException("Director c id=" + id + " не существует.");
+    public void removeDirector(int id){
+        int rowsDeleted = jdbcTemplate.update(DELETE_DIRECTOR,id);
+        if(rowsDeleted == 0){
+            throw new NotFoundException("Director c id="+id+" не существует.");
         }
     }
 }

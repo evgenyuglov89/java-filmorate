@@ -12,32 +12,32 @@ import java.util.List;
 public class DirectorController {
     private DirectorService directorService;
 
-    public DirectorController(DirectorService directorService) {
+    public DirectorController(DirectorService directorService){
         this.directorService = directorService;
     }
 
     @GetMapping
-    public List<Director> directorsList() {
+    public List<Director> directorsList(){
         return directorService.directorsList();
     }
 
     @GetMapping("/{id}")
-    public Director getDirector(@PathVariable int id) {
+    public Director getDirector(@PathVariable int id){
         return directorService.findById(id);
     }
 
     @PostMapping
-    public Director createDirector(@RequestBody Director director) {
+    public Director createDirector(@RequestBody Director director){
         return directorService.createDirector(director);
     }
 
     @PutMapping
-    public Director updateDirector(@RequestBody Director director) {
+    public Director updateDirector(@RequestBody Director director){
         return directorService.updateDirector(director);
     }
 
     @DeleteMapping("/{id}")
-    public void removeDirector(@PathVariable int id) {
+    public void removeDirector( @PathVariable int id){
         directorService.removeDirector(id);
     }
 }
