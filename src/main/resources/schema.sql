@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS "friendship" (
 CREATE TABLE IF NOT EXISTS "directors" (
     "id" BIGSERIAL PRIMARY KEY,
     "name" VARCHAR(255) NOT NULL,
-    "status" BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS "film_directors" (
