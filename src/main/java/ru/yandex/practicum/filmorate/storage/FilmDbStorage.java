@@ -368,7 +368,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = switch (sortBy) {
             case "likes" -> GET_FILMS_BY_DIRECTOR_SORT_BY_LIKES;
             case "year" -> GET_FILMS_BY_DIRECTOR_SORT_BY_YEAR;
-            default -> throw new IllegalArgumentException("Некорректный параметр сортировки: " + sortBy);
+            default -> GET_FILMS_BY_DIRECTOR_SORT_BY_YEAR;
         };
 
         List<Film> films = jdbc.query(query, mapper, directorId);
