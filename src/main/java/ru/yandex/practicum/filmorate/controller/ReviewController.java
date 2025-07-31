@@ -57,11 +57,11 @@ public class ReviewController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable int id, @PathVariable int userId) {
-        reviewService.deleteReaction(id, userId, false);
+        reviewService.deleteReaction(id, userId, true);
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
     public void deleteDislike(@PathVariable int id, @PathVariable int userId) {
-        reviewService.deleteReaction(id, userId, true);
+        reviewService.deleteReaction(id, userId, false);
     }
 }
