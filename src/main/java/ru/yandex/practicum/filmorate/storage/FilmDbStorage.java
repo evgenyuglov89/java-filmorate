@@ -29,11 +29,7 @@ public class FilmDbStorage implements FilmStorage {
             "SELECT COUNT(*) FROM \"mpa_rating\" WHERE \"id\" = ?";
     private static final String GET_FILM_BY_ID = """
             SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
-            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_descrip
-            
-            
-            
-            tion"
+            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description"
             FROM "films" f
             LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
             WHERE f."id" = ?""";
@@ -91,6 +87,32 @@ public class FilmDbStorage implements FilmStorage {
                 WHERE fd."film_id" = ?
                 ORDER BY d."id"
             """;
+    private static final String GET_FILMS_BY_DIRECTOR_SORT_BY_YEAR = """
+                SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate",
+                       f."duration",
+                       m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description"
+                FROM "films" f
+                JOIN "film_directors" fd ON f."id" = fd."film_id"
+                LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+                WHERE fd."director_id" = ?
+                ORDER BY f."release_date" ASC NULLS LAST, f."id" ASC
+            """;
+
+    private static final String GET_FILMS_BY_DIRECTOR_SORT_BY_LIKES = """
+                SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate",
+                       f."duration",
+                       m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                       COALESCE(COUNT(l."user_id"), 0) AS likes_count
+                FROM "films" f
+                JOIN "film_directors" fd ON f."id" = fd."film_id"
+                LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+                LEFT JOIN "likes" l ON f."id" = l."film_id"
+                WHERE fd."director_id" = ?
+                GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
+                         m."id", m."name", m."description"
+                ORDER BY likes_count DESC, f."id" ASC
+            """;
+
 
     @Override
     public Film save(Film film) {
@@ -334,4 +356,31 @@ public class FilmDbStorage implements FilmStorage {
         film.setGenres(genres);
         film.setLikes(likes);
     }
+
+    @Override
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "year";
+        } else {
+            sortBy = sortBy.trim().toLowerCase();
+        }
+
+        String query = switch (sortBy) {
+            case "likes" -> GET_FILMS_BY_DIRECTOR_SORT_BY_LIKES;
+            case "year" -> GET_FILMS_BY_DIRECTOR_SORT_BY_YEAR;
+            default -> throw new IllegalArgumentException("Некорректный параметр сортировки: " + sortBy);
+        };
+
+        List<Film> films = jdbc.query(query, mapper, directorId);
+
+        if (films.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        films.forEach(this::getGenresAndLikesAndDirectors);
+
+        return films;
+    }
+
+
 }
