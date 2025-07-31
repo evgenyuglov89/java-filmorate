@@ -41,6 +41,5 @@ public class Film {
 
     private List<Genre> genres;
 
-    @JsonProperty("director")
     private List<Director> directors;
 }
