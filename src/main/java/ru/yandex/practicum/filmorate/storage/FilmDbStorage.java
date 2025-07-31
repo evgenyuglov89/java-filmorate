@@ -151,7 +151,7 @@ public class FilmDbStorage implements FilmStorage {
             jdbc.batchUpdate(INSERT_FILM_GENRES, batchArgs);
         }
 
-        List<Director> directors = film.getDirector();
+        List<Director> directors = film.getDirectors();
         if (directors != null && !directors.isEmpty()) {
             ifDirectorExists(directors);  // Метод проверяет, что такие режиссеры существуют (тебе нужно его реализовать)
 
@@ -243,7 +243,7 @@ public class FilmDbStorage implements FilmStorage {
                         LinkedHashMap::new
                 ));
 
-        film.setDirector(new ArrayList<>(uniqueDirectors.values()));
+        film.setDirectors(new ArrayList<>(uniqueDirectors.values()));
         return film;
     }
 
@@ -352,7 +352,7 @@ public class FilmDbStorage implements FilmStorage {
                 (rs, rowNum) -> new Director(rs.getInt("id"), rs.getString("name")),
                 film.getId()
         );
-        film.setDirector(directors);
+        film.setDirectors(directors);
         film.setGenres(genres);
         film.setLikes(likes);
     }
