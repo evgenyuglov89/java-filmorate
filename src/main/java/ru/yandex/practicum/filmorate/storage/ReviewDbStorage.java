@@ -49,7 +49,9 @@ public class ReviewDbStorage {
     private static final String INSERT_NEW_REVIEW = """
             INSERT INTO "reviews" ("film_id", "user_id", "content", "is_positive") VALUES (?, ?, ?, ?)""";
     private static final String INSERT_NEW_REVIEW_REACTIONS = """
-            INSERT INTO "review_reactions" ("review_id", "user_id", "useful") VALUES (?, ?, ?)""";
+            MERGE INTO "review_reactions" ("review_id", "user_id", "useful")
+            KEY ("review_id", "user_id")
+            VALUES (?, ?, ?)""";
     private static final String UPDATE_REVIEW = """
             UPDATE "reviews" SET "film_id" = ?, "user_id" = ?,"content" = ?, "is_positive" = ? WHERE "id" = ?""";
     private static final String DELETE_REVIEW_BY_ID = """
