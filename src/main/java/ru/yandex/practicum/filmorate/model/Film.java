@@ -39,4 +39,7 @@ public class Film {
     private Set<Integer> likes = new HashSet<>();
 
     private List<Genre> genres;
+
+
+    private List<Director> director;
 }

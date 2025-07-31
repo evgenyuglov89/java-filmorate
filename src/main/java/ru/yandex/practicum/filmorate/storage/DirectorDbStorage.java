@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -38,7 +37,7 @@ public class DirectorDbStorage {
     }
 
     public Director createDirector(Director director) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
                     INSERT_NEW_DIRECTOR, Statement.RETURN_GENERATED_KEYS
@@ -47,9 +46,11 @@ public class DirectorDbStorage {
             return ps;
         }, keyHolder);
 
-        Number key = keyHolder.getKey();
+        Long key = keyHolder.getKeyAs(Long.class);
         if (key != null) {
             director.setId(key.intValue());
+        } else {
+            throw new NotFoundException("Не удалось сохранить режиссера");
         }
         return director;
     }

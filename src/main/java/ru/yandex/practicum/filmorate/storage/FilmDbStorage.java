@@ -6,6 +6,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -28,7 +29,11 @@ public class FilmDbStorage implements FilmStorage {
             "SELECT COUNT(*) FROM \"mpa_rating\" WHERE \"id\" = ?";
     private static final String GET_FILM_BY_ID = """
             SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
-            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description"
+            m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_descrip
+            
+            
+            
+            tion"
             FROM "films" f
             LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
             WHERE f."id" = ?""";
@@ -70,6 +75,8 @@ public class FilmDbStorage implements FilmStorage {
                     "VALUES (?, ?, ?, ?, ?)";
     private static final String INSERT_FILM_GENRES =
             "INSERT INTO \"film_genres\" (\"film_id\", \"genre_id\") VALUES (?, ?)";
+    private static final String INSERT_FILM_DIRECTORS =
+            "INSERT INTO \"film_directors\" (\"film_id\", \"director_id\") VALUES (?, ?)";
     private static final String INSERT_LIKE =
             "INSERT INTO \"likes\" (\"film_id\", \"user_id\") VALUES (?, ?)";
     private static final String UPDATE_FILM =
@@ -77,6 +84,13 @@ public class FilmDbStorage implements FilmStorage {
                     "\"duration\" = ?, \"mpa_id\" = ? WHERE \"id\" = ?";
     private static final String DELETE_LIKE =
             "DELETE FROM \"likes\" WHERE \"film_id\" = ? AND \"user_id\" = ?";
+    private static final String GET_DIRECTORS_BY_FILM_ID = """
+                SELECT d."id", d."name"
+                FROM "film_directors" fd
+                JOIN "directors" d ON fd."director_id" = d."id"
+                WHERE fd."film_id" = ?
+                ORDER BY d."id"
+            """;
 
     @Override
     public Film save(Film film) {
@@ -115,6 +129,19 @@ public class FilmDbStorage implements FilmStorage {
             jdbc.batchUpdate(INSERT_FILM_GENRES, batchArgs);
         }
 
+        List<Director> directors = film.getDirector();
+        if (directors != null && !directors.isEmpty()) {
+            ifDirectorExists(directors);  // Метод проверяет, что такие режиссеры существуют (тебе нужно его реализовать)
+
+            Set<Integer> uniqueDirectorIds = directors.stream()
+                    .map(Director::getId)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            List<Object[]> batchDirectorArgs = uniqueDirectorIds.stream()
+                    .map(directorId -> new Object[]{film.getId(), directorId})
+                    .toList();
+            jdbc.batchUpdate(INSERT_FILM_DIRECTORS, batchDirectorArgs);
+        }
+
         return film;
     }
 
@@ -143,7 +170,7 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbc.query(GET_ALL_FILMS, mapper);
 
         for (Film film : films) {
-            getGenresAndLikes(film);
+            getGenresAndLikesAndDirectors(film);
             filmsUpload.add(film);
         }
 
@@ -180,7 +207,21 @@ public class FilmDbStorage implements FilmStorage {
                 film.getMpa().getId()
         );
         film.setMpa(mpa);
+        List<Director> directors = jdbc.query(
+                GET_DIRECTORS_BY_FILM_ID,
+                (rs, rowNum) -> new Director(rs.getInt("id"), rs.getString("name")),
+                film.getId()
+        );
 
+        Map<Integer, Director> uniqueDirectors = directors.stream()
+                .collect(Collectors.toMap(
+                        Director::getId,
+                        Function.identity(),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
+
+        film.setDirector(new ArrayList<>(uniqueDirectors.values()));
         return film;
     }
 
@@ -199,7 +240,7 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbc.query(GET_POPULAR_FILMS, new Object[]{count}, mapper);
 
         for (Film film : films) {
-            getGenresAndLikes(film);
+            getGenresAndLikesAndDirectors(film);
         }
 
         return films;
@@ -244,7 +285,35 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private void getGenresAndLikes(Film film) {
+    private void ifDirectorExists(List<Director> directors) {
+        if (directors.isEmpty()) {
+            return;
+        }
+
+        List<Integer> directorIds = directors.stream()
+                .map(Director::getId)
+                .distinct()
+                .toList();
+
+        String inSql = String.join(",", Collections.nCopies(directorIds.size(), "?"));
+
+        String query = "SELECT \"id\" FROM \"directors\" WHERE \"id\" IN (" + inSql + ")";
+
+        List<Integer> existingIds = jdbc.query(
+                query,
+                directorIds.toArray(new Object[0]),
+                (rs, rowNum) -> rs.getInt("id")
+        );
+
+        if (existingIds.size() != directorIds.size()) {
+            List<Integer> notFound = new ArrayList<>(directorIds);
+            notFound.removeAll(existingIds);
+            throw new NotFoundException("Режиссеры не найдены: " + notFound);
+        }
+    }
+
+
+    private void getGenresAndLikesAndDirectors(Film film) {
         List<Genre> genres = jdbc.query(
                 GET_GENRES_BY_FILM_ID,
                 (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")),
@@ -256,7 +325,12 @@ public class FilmDbStorage implements FilmStorage {
                 Integer.class,
                 film.getId()
         ));
-
+        List<Director> directors = jdbc.query(
+                GET_DIRECTORS_BY_FILM_ID,
+                (rs, rowNum) -> new Director(rs.getInt("id"), rs.getString("name")),
+                film.getId()
+        );
+        film.setDirector(directors);
         film.setGenres(genres);
         film.setLikes(likes);
     }
