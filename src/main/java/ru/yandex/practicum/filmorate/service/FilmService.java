@@ -84,4 +84,8 @@ public class FilmService {
         log.info("Был возвращён список фильмов в кол-ве: {}", count);
         return filmStorage.getPopularFilms(count);
     }
+
+    public void delete(int id) {
+        filmStorage.delete(id);
+    }
 }
