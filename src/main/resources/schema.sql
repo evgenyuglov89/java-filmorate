@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "films" (
     "duration" INTEGER NOT NULL,
     "mpa_id" BIGINT,
 
-    CONSTRAINT fk_mpa FOREIGN KEY ("mpa_id") REFERENCES "mpa_rating"("id")
+    CONSTRAINT fk_mpa FOREIGN KEY ("mpa_id") REFERENCES "mpa_rating"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "genres" (
@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS "film_genres" (
     "film_id" BIGINT,
     "genre_id" BIGINT,
 
-    CONSTRAINT fk_film_genres_film FOREIGN KEY ("film_id") REFERENCES "films"("id"),
-    CONSTRAINT fk_film_genres_genre FOREIGN KEY ("genre_id") REFERENCES "genres"("id")
+    CONSTRAINT fk_film_genres_film FOREIGN KEY ("film_id") REFERENCES "films"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_film_genres_genre FOREIGN KEY ("genre_id") REFERENCES "genres"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "likes" (
     "film_id" BIGINT,
     "user_id" BIGINT,
 
-    CONSTRAINT fk_likes_film FOREIGN KEY ("film_id") REFERENCES "films"("id"),
-    CONSTRAINT fk_likes_user FOREIGN KEY ("user_id") REFERENCES "users"("id")
+    CONSTRAINT fk_likes_film FOREIGN KEY ("film_id") REFERENCES "films"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_likes_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "friendship" (
@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS "friendship" (
     "friend_id" BIGINT,
     "status" BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT fk_friendship_user FOREIGN KEY ("user_id") REFERENCES "users"("id"),
-    CONSTRAINT fk_friendship_friend FOREIGN KEY ("friend_id") REFERENCES "users"("id")
+    CONSTRAINT fk_friendship_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_friendship_friend FOREIGN KEY ("friend_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "directors" (
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS "film_directors" (
     "film_id" BIGINT NOT NULL,
     "director_id" BIGINT NOT NULL,
 
-    CONSTRAINT fk_film_directors_film FOREIGN KEY ("film_id") REFERENCES "films"("id"),
-    CONSTRAINT fk_film_directors_director FOREIGN KEY ("director_id") REFERENCES "directors"("id")
+    CONSTRAINT fk_film_directors_film FOREIGN KEY ("film_id") REFERENCES "films"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_film_directors_director FOREIGN KEY ("director_id") REFERENCES "directors"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "events" (
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS "events" (
     "type" VARCHAR(50) NOT NULL,
     "operation" VARCHAR(50) NOT NULL,
 
-    CONSTRAINT fk_events_user FOREIGN KEY ("user_id") REFERENCES "users"("id")
+    CONSTRAINT fk_events_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "reviews" (
@@ -84,8 +84,8 @@ CREATE TABLE IF NOT EXISTS "reviews" (
     "is_positive" BOOLEAN NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_review_user FOREIGN KEY ("user_id") REFERENCES "users"("id"),
-    CONSTRAINT fk_review_film FOREIGN KEY ("film_id") REFERENCES "films"("id")
+    CONSTRAINT fk_review_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_review_film FOREIGN KEY ("film_id") REFERENCES "films"("id") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS "review_reactions" (
@@ -94,6 +94,6 @@ CREATE TABLE IF NOT EXISTS "review_reactions" (
     "useful" BIGINT NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_review_reactions_review FOREIGN KEY ("review_id") REFERENCES "reviews"("id"),
-    CONSTRAINT fk_review_reactions_user FOREIGN KEY ("user_id") REFERENCES "users"("id")
+    CONSTRAINT fk_review_reactions_review FOREIGN KEY ("review_id") REFERENCES "reviews"("id") ON DELETE CASCADE,
+    CONSTRAINT fk_review_reactions_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );

@@ -36,6 +36,11 @@ public class UserController {
         return userService.usersList();
     }
 
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable int id) {
+        return userService.findById(id);
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable int id, @PathVariable int friendId) {
         userService.addFriend(id, friendId);
@@ -59,5 +64,10 @@ public class UserController {
     @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendations(@PathVariable int id) {
         return filmService.getRecommendations(id);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void delete(@PathVariable int userId) {
+        userService.delete(userId);
     }
 }

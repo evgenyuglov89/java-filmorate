@@ -44,6 +44,8 @@ public class UserDbStorage implements UserStorage {
             "UPDATE \"users\" SET \"name\" = ?, \"login\" = ?, \"birthday\" = ? WHERE \"id\" = ?";
     private static final String DELETE_FRIENDS =
             "DELETE FROM \"friendship\" WHERE \"user_id\" = ? AND \"friend_id\" = ?";
+    private static final String DELETE_USER = """
+            DELETE FROM "users" WHERE "id" = ?""";
 
     @Override
     public User save(User user) {
@@ -140,5 +142,10 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getCommonFriends(int userId, int friendId) {
         return jdbc.query(GET_COMMON_FRIENDS, mapper, userId, friendId);
+    }
+
+    @Override
+    public void delete(int id) {
+        jdbc.update(DELETE_USER, id);
     }
 }

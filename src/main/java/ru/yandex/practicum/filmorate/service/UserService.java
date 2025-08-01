@@ -111,4 +111,12 @@ public class UserService {
 
         return commonFriends;
     }
+
+    public User findById(int id) {
+        return userStorage.findById(id);
+    }
+
+    public void delete(int id) {
+        userStorage.delete(id);
+    }
 }

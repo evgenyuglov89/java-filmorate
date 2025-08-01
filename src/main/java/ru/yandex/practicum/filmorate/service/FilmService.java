@@ -88,7 +88,11 @@ public class FilmService {
     public List<Film> getRecommendations(int userId) {
         return filmStorage.getRecommendations(userId);
     }
-  
+
+    public void delete(int id) {
+        filmStorage.delete(id);
+    }
+
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }

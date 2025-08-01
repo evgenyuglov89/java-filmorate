@@ -80,6 +80,10 @@ public class FilmDbStorage implements FilmStorage {
                     "\"duration\" = ?, \"mpa_id\" = ? WHERE \"id\" = ?";
     private static final String DELETE_LIKE =
             "DELETE FROM \"likes\" WHERE \"film_id\" = ? AND \"user_id\" = ?";
+
+    private static final String DELETE_FILM = """
+            DELETE FROM "films" WHERE "id" = ?""";
+
     private static final String GET_DIRECTORS_BY_FILM_ID = """
                 SELECT d."id", d."name"
                 FROM "film_directors" fd
@@ -112,7 +116,6 @@ public class FilmDbStorage implements FilmStorage {
                          m."id", m."name", m."description"
                 ORDER BY likes_count DESC, f."id" ASC
             """;
-
 
     @Override
     public Film save(Film film) {
@@ -352,7 +355,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-
     private void getGenresAndLikesAndDirectors(Film film) {
         List<Genre> genres = jdbc.query(
                 GET_GENRES_BY_FILM_ID,
@@ -432,6 +434,10 @@ public class FilmDbStorage implements FilmStorage {
         """;
 
         return jdbc.query(sql, mapper, similarUserId, targetUserId);
+    }
+
+    public void delete(int id) {
+        jdbc.update(DELETE_FILM, id);
     }
 
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
