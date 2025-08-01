@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" BIGSERIAL PRIMARY KEY,
     "name" VARCHAR(255) NOT NULL,
     "login" VARCHAR(255) NOT NULL,
-    "email" VARCHAR(255) UNIQUE NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
     "birthday" DATE
 );
 
@@ -54,9 +54,8 @@ CREATE TABLE IF NOT EXISTS "friendship" (
 );
 
 CREATE TABLE IF NOT EXISTS "directors" (
-    "id" BIGSERIAL PRIMARY KEY,
-    "name" VARCHAR(255) NOT NULL,
-    "status" BOOLEAN DEFAULT FALSE
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "film_directors" (
@@ -73,7 +72,6 @@ CREATE TABLE IF NOT EXISTS "events" (
     "entity_id" BIGINT NOT NULL,
     "type" VARCHAR(50) NOT NULL,
     "operation" VARCHAR(50) NOT NULL,
-    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_events_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
@@ -93,7 +91,7 @@ CREATE TABLE IF NOT EXISTS "reviews" (
 CREATE TABLE IF NOT EXISTS "review_reactions" (
     "review_id" BIGINT NOT NULL,
     "user_id" BIGINT NOT NULL,
-    "is_useful" BOOLEAN NOT NULL,
+    "useful" BIGINT NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_review_reactions_review FOREIGN KEY ("review_id") REFERENCES "reviews"("id") ON DELETE CASCADE,
