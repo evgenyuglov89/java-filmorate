@@ -85,6 +85,10 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
+    public List<Film> getRecommendations(int userId) {
+        return filmStorage.getRecommendations(userId);
+    }
+
     public void delete(int id) {
         filmStorage.delete(id);
     }

@@ -355,7 +355,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-
     private void getGenresAndLikesAndDirectors(Film film) {
         List<Genre> genres = jdbc.query(
                 GET_GENRES_BY_FILM_ID,
@@ -379,6 +378,64 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getRecommendations(int userId) {
+        Set<Integer> userLikes = getLikedFilmIdsByUser(userId);
+        Map<Integer, Integer> similarityScores = findSimilarUsers(userId, userLikes);
+
+        return findMostSimilarUser(similarityScores)
+                .map(similarUserId -> getRecommendations(userId, similarUserId))
+                .orElse(Collections.emptyList());
+    }
+
+    private Set<Integer> getLikedFilmIdsByUser(int userId) {
+        String sql = "SELECT \"film_id\" FROM \"likes\" WHERE \"user_id\" = ?";
+        return new HashSet<>(jdbc.queryForList(sql, Integer.class, userId));
+    }
+
+    private Map<Integer, Integer> findSimilarUsers(int userId, Set<Integer> userLikes) {
+        String sql = "SELECT \"user_id\", \"film_id\" FROM \"likes\" WHERE \"user_id\" != ?";
+        List<Map<String, Object>> rows = jdbc.queryForList(sql, userId);
+
+        Map<Integer, Set<Integer>> otherUsersLikes = new HashMap<>();
+
+        for (Map<String, Object> row : rows) {
+            Integer otherUserId = ((Number) row.get("user_id")).intValue();
+            Integer filmId = ((Number) row.get("film_id")).intValue();
+
+            otherUsersLikes.computeIfAbsent(otherUserId, k -> new HashSet<>()).add(filmId);
+        }
+
+        Map<Integer, Integer> similarityScores = new HashMap<>();
+
+        for (Map.Entry<Integer, Set<Integer>> entry : otherUsersLikes.entrySet()) {
+            Set<Integer> common = new HashSet<>(entry.getValue());
+            common.retainAll(userLikes);
+            similarityScores.put(entry.getKey(), common.size());
+        }
+
+        return similarityScores;
+    }
+
+    private Optional<Integer> findMostSimilarUser(Map<Integer, Integer> similarityScores) {
+        return similarityScores.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
+    }
+
+    private List<Film> getRecommendations(int targetUserId, int similarUserId) {
+        String sql = """
+        SELECT f."id", f."name", f."description", f."release_date", f."duration",
+               f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
+        FROM "likes" l
+        JOIN "films" f ON f."id" = l."film_id"
+        JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+        WHERE l."user_id" = ? AND l."film_id" NOT IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+        """;
+
+        return jdbc.query(sql, mapper, similarUserId, targetUserId);
+    }
+
     public void delete(int id) {
         jdbc.update(DELETE_FILM, id);
     }
