@@ -179,6 +179,21 @@ public class FilmDbStorage implements FilmStorage {
                     film.getDuration(),
                     film.getMpa().getId(),
                     film.getId());
+            List<Director> directors = film.getDirectors();
+            jdbc.update("DELETE FROM \"film_directors\" WHERE \"film_id\" = ?", film.getId());
+
+            if (directors != null && !directors.isEmpty()) {
+                ifDirectorExists(directors);
+
+                Set<Integer> uniqueDirectorIds = directors.stream()
+                        .map(Director::getId)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+                List<Object[]> batchDirectorArgs = uniqueDirectorIds.stream()
+                        .map(directorId -> new Object[]{film.getId(), directorId})
+                        .toList();
+                jdbc.batchUpdate(INSERT_FILM_DIRECTORS, batchDirectorArgs);
+            }
         } else {
             throw new NotFoundException("Фильм который вы пытаетесь обновить не существует " + film.getId());
         }
@@ -381,6 +396,5 @@ public class FilmDbStorage implements FilmStorage {
 
         return films;
     }
-
 
 }
