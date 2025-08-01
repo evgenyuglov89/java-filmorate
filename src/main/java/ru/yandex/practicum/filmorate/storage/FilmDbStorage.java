@@ -270,12 +270,13 @@ public class FilmDbStorage implements FilmStorage {
                 .map(similarUserId -> getRecommendations(userId, similarUserId))
                 .orElse(Collections.emptyList());
     }
-    Set<Integer> getLikedFilmIdsByUser(int userId) {
+
+    private Set<Integer> getLikedFilmIdsByUser(int userId) {
         String sql = "SELECT \"film_id\" FROM \"likes\" WHERE \"user_id\" = ?";
         return new HashSet<>(jdbc.queryForList(sql, Integer.class, userId));
     }
 
-    Map<Integer, Integer> findSimilarUsers(int userId, Set<Integer> userLikes) {
+    private Map<Integer, Integer> findSimilarUsers(int userId, Set<Integer> userLikes) {
         String sql = "SELECT \"user_id\", \"film_id\" FROM \"likes\" WHERE \"user_id\" != ?";
         List<Map<String, Object>> rows = jdbc.queryForList(sql, userId);
 
@@ -299,14 +300,14 @@ public class FilmDbStorage implements FilmStorage {
         return similarityScores;
     }
 
-    Optional<Integer> findMostSimilarUser(Map<Integer, Integer> similarityScores) {
+    private Optional<Integer> findMostSimilarUser(Map<Integer, Integer> similarityScores) {
         return similarityScores.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey);
     }
 
-    List<Film> getRecommendations(int targetUserId, int similarUserId) {
+    private List<Film> getRecommendations(int targetUserId, int similarUserId) {
         String sql = """
         SELECT f."id", f."name", f."description", f."release_date", f."duration",
                f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
