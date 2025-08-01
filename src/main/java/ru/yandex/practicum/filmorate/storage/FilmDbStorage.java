@@ -216,7 +216,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film findById(int id) {
-        Film film = jdbc.queryForObject(GET_FILM_BY_ID, mapper, id);
+        Film film = jdbc.query(GET_FILM_BY_ID, mapper, id)
+                .stream()
+                .findAny()
+                .orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден"));
 
         List<Genre> genres = jdbc.query(
                 GET_GENRES_BY_FILM_ID,
