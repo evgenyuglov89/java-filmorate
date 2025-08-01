@@ -85,6 +85,10 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
+    public void delete(int id) {
+        filmStorage.delete(id);
+    }
+
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
