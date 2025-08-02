@@ -116,6 +116,21 @@ public class FilmDbStorage implements FilmStorage {
                          m."id", m."name", m."description"
                 ORDER BY likes_count DESC, f."id" ASC
             """;
+    private static final String GET_COMMON_FILMS_SORTED_BY_POPULARITY = """
+                SELECT f.id, f.name, f.description, f.release_date AS releaseDate,
+                       f.duration,
+                       m.id AS mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                       COUNT(l_all.user_id) AS likes_count
+                FROM films f
+                JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
+                JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
+                LEFT JOIN mpa_rating m ON f.mpa_id = m.id
+                LEFT JOIN likes l_all ON f.id = l_all.film_id
+                GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
+                         m.id, m.name, m.description
+                ORDER BY likes_count DESC, f.id ASC
+            """;
+
 
     @Override
     public Film save(Film film) {
@@ -425,13 +440,13 @@ public class FilmDbStorage implements FilmStorage {
 
     private List<Film> getRecommendations(int targetUserId, int similarUserId) {
         String sql = """
-        SELECT f."id", f."name", f."description", f."release_date", f."duration",
-               f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
-        FROM "likes" l
-        JOIN "films" f ON f."id" = l."film_id"
-        JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-        WHERE l."user_id" = ? AND l."film_id" NOT IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-        """;
+                SELECT f."id", f."name", f."description", f."release_date", f."duration",
+                       f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
+                FROM "likes" l
+                JOIN "films" f ON f."id" = l."film_id"
+                JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+                WHERE l."user_id" = ? AND l."film_id" NOT IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+                """;
 
         return jdbc.query(sql, mapper, similarUserId, targetUserId);
     }
@@ -463,4 +478,12 @@ public class FilmDbStorage implements FilmStorage {
 
         return films;
     }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> films = jdbc.query(GET_COMMON_FILMS_SORTED_BY_POPULARITY, mapper, userId, friendId);
+        films.forEach(this::getGenresAndLikesAndDirectors);
+        return films;
+    }
+
 }
