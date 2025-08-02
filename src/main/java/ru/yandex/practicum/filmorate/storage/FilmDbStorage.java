@@ -103,27 +103,44 @@ public class FilmDbStorage implements FilmStorage {
             """;
 
     private static final String GET_FILMS_BY_DIRECTOR_SORT_BY_LIKES = """
-                SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate",
+                SELECT f."id",
+                       f."name",
+                       f."description",
+                       f."release_date" AS "releaseDate",
                        f."duration",
-                       m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
-                       COALESCE(COUNT(l."user_id"), 0) AS likes_count
-                FROM "films" f
-                JOIN "film_directors" fd ON f."id" = fd."film_id"
-                LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-                LEFT JOIN "likes" l ON f."id" = l."film_id"
-                WHERE fd."director_id" = ?
-                GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
-                         m."id", m."name", m."description"
-                ORDER BY likes_count DESC, f."id" ASC
-            """;
-    private static final String GET_COMMON_FILMS_BY_POPULARITY = """
-                SELECT f."id", f."name", f."description", f."release_date", f."duration", f."mpa_id"
+                       m."id" AS "mpa_id",
+                       m."name" AS "mpa_name",
+                       m."description" AS "mpa_description",
+                       COUNT(l."user_id") AS "likes_count"
                 FROM "films" f
                 JOIN "likes" l1 ON f."id" = l1."film_id" AND l1."user_id" = ?
                 JOIN "likes" l2 ON f."id" = l2."film_id" AND l2."user_id" = ?
                 LEFT JOIN "likes" l ON f."id" = l."film_id"
-                GROUP BY f."id", f."name", f."description", f."release_date", f."duration", f."mpa_id"
-                ORDER BY COUNT(l."user_id") DESC
+                LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+                GROUP BY f."id", f."name", f."description", f."release_date", f."duration",\s
+                         m."id", m."name", m."description"
+                ORDER BY "likes_count" DESC;
+            
+            """;
+    private static final String GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY = """ 
+            SELECT f."id",
+                   f."name",
+                   f."description",
+                   f."release_date" AS "releaseDate",
+                   f."duration",
+                   m."id" AS "mpa_id",
+                   m."name" AS "mpa_name",
+                   m."description" AS "mpa_description",
+                   COUNT(l."user_id") AS likes_count
+            FROM "films" f
+            JOIN "likes" l1 ON f."id" = l1."film_id" AND l1."user_id" = ?
+            JOIN "likes" l2 ON f."id" = l2."film_id" AND l2."user_id" = ?
+            LEFT JOIN "likes" l ON f."id" = l."film_id"
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            GROUP BY f."id", f."name", f."description", f."release_date", f."duration",\s
+                     m."id", m."name", m."description"
+            ORDER BY likes_count DESC;
+            
             """;
 
 
@@ -476,7 +493,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
-        List<Film> films = jdbc.query(GET_COMMON_FILMS_BY_POPULARITY, mapper, userId, friendId);
+        List<Film> films = jdbc.query(GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY,
+                new Object[]{userId, friendId},
+                mapper);
+
         films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
     }
