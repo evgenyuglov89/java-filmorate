@@ -31,11 +31,11 @@ public class UserDbStorage implements UserStorage {
     private static final String GET_USER_FRIENDS =
             "SELECT \"friend_id\" FROM \"friendship\" AS \"g\" WHERE \"user_id\" = ?";
     private static final String GET_COMMON_FRIENDS = """
-        SELECT u.* FROM "users" u
-        JOIN "friendship" f1 ON u."id" = f1."friend_id"
-        JOIN "friendship" f2 ON u."id" = f2."friend_id"
-        WHERE f1."user_id" = ? AND f2."user_id" = ?
-        """;
+            SELECT u.* FROM "users" u
+            JOIN "friendship" f1 ON u."id" = f1."friend_id"
+            JOIN "friendship" f2 ON u."id" = f2."friend_id"
+            WHERE f1."user_id" = ? AND f2."user_id" = ?
+            """;
     private static final String INSERT_NEW_USER =
             "INSERT INTO \"users\" (\"name\", \"email\", \"login\", \"birthday\") VALUES (?, ?, ?, ?)";
     private static final String INSERT_NEW_FRIEND =
@@ -44,6 +44,8 @@ public class UserDbStorage implements UserStorage {
             "UPDATE \"users\" SET \"name\" = ?, \"login\" = ?, \"birthday\" = ? WHERE \"id\" = ?";
     private static final String DELETE_FRIENDS =
             "DELETE FROM \"friendship\" WHERE \"user_id\" = ? AND \"friend_id\" = ?";
+    private static final String DELETE_USER = """
+            DELETE FROM "users" WHERE "id" = ?""";
 
     @Override
     public User save(User user) {
@@ -88,9 +90,9 @@ public class UserDbStorage implements UserStorage {
     public User findById(int id) {
         return jdbc.query(GET_USER_BY_ID, (rs, rowNum) -> new UserRowMapper()
                         .mapRow(rs, rowNum), id)
-                        .stream()
-                        .findAny()
-                        .orElseThrow(() -> new NotFoundException("User not found"));
+                .stream()
+                .findAny()
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     @Override
@@ -140,5 +142,10 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getCommonFriends(int userId, int friendId) {
         return jdbc.query(GET_COMMON_FRIENDS, mapper, userId, friendId);
+    }
+
+    @Override
+    public void delete(int id) {
+        jdbc.update(DELETE_USER, id);
     }
 }

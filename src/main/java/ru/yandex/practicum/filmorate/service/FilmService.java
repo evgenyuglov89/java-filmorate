@@ -86,6 +86,18 @@ public class FilmService {
         return filmStorage.getPopularFilms(count);
     }
 
+    public List<Film> getRecommendations(int userId) {
+        return filmStorage.getRecommendations(userId);
+    }
+
+    public void delete(int id) {
+        filmStorage.delete(id);
+    }
+
+    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        return filmStorage.getFilmsByDirector(directorId, sortBy);
+    }
+
     public List<Film> search(String query, List<String> by) {
         if (query == null || query.isBlank()) {
             throw new ValidationException("Поисковый запрос не может быть пустым");
