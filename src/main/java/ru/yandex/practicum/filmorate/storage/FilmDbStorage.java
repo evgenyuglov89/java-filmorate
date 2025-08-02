@@ -121,7 +121,7 @@ public class FilmDbStorage implements FilmStorage {
                          m."id", m."name", m."description"
                 ORDER BY "likes_count" DESC;
             """;
-    private static final String GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY = """ 
+    private static final String GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY = """
             SELECT f."id",
                     f."name",
                     f."description",
