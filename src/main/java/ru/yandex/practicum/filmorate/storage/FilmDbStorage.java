@@ -116,19 +116,14 @@ public class FilmDbStorage implements FilmStorage {
                          m."id", m."name", m."description"
                 ORDER BY likes_count DESC, f."id" ASC
             """;
-    private static final String GET_COMMON_FILMS_SORTED_BY_POPULARITY = """
-                SELECT f.id, f.name, f.description, f.release_date AS releaseDate,
-                       f.duration,
-                       m.id AS mpa_id, m.name AS mpa_name, m.description AS mpa_description,
-                       COUNT(l_all.user_id) AS likes_count
-                FROM films f
-                JOIN likes l1 ON f.id = l1.film_id AND l1.user_id = ?
-                JOIN likes l2 ON f.id = l2.film_id AND l2.user_id = ?
-                LEFT JOIN mpa_rating m ON f.mpa_id = m.id
-                LEFT JOIN likes l_all ON f.id = l_all.film_id
-                GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
-                         m.id, m.name, m.description
-                ORDER BY likes_count DESC, f.id ASC
+    private static final String GET_COMMON_FILMS_BY_POPULARITY = """
+                SELECT f."id", f."name", f."description", f."release_date", f."duration", f."mpa_id"
+                FROM "films" f
+                JOIN "likes" l1 ON f."id" = l1."film_id" AND l1."user_id" = ?
+                JOIN "likes" l2 ON f."id" = l2."film_id" AND l2."user_id" = ?
+                LEFT JOIN "likes" l ON f."id" = l."film_id"
+                GROUP BY f."id", f."name", f."description", f."release_date", f."duration", f."mpa_id"
+                ORDER BY COUNT(l."user_id") DESC
             """;
 
 
@@ -481,7 +476,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
-        List<Film> films = jdbc.query(GET_COMMON_FILMS_SORTED_BY_POPULARITY, mapper, userId, friendId);
+        List<Film> films = jdbc.query(GET_COMMON_FILMS_BY_POPULARITY, mapper, userId, friendId);
         films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
     }
