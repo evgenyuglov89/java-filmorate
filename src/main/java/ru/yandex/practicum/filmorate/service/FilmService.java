@@ -96,4 +96,9 @@ public class FilmService {
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
+
+    public List<Film> getPopularWithFilters(Integer genreId, Integer year, Integer count) {
+        int effectiveCount = (count == null) ? 10 : count;
+        return filmStorage.getPopularWithFilters(genreId, year, effectiveCount);
+    }
 }
