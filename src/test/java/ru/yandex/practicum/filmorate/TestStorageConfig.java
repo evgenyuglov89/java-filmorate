@@ -30,6 +30,11 @@ public class TestStorageConfig {
     }
 
     @Bean
+    public DirectorRowMapper directorRowMapper() {
+        return new DirectorRowMapper();
+    }
+
+    @Bean
     public UserStorage userStorage(JdbcTemplate jdbcTemplate, UserRowMapper mapper) {
         return new UserDbStorage(jdbcTemplate, mapper);
     }
