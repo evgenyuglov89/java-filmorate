@@ -98,6 +98,10 @@ public class FilmService {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
     public List<Film> search(String query, List<String> by) {
         if (query == null || query.isBlank()) {
             throw new ValidationException("Поисковый запрос не может быть пустым");
