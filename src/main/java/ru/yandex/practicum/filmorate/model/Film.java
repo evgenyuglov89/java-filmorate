@@ -7,7 +7,6 @@ import lombok.*;
 import ru.yandex.practicum.filmorate.validation.ReleaseDateConstraint;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,8 +37,6 @@ public class Film {
 
     @Builder.Default
     private Set<Integer> likes = new HashSet<>();
-    @Builder.Default
-    private List<Genre> genres = new ArrayList<>();
-    @Builder.Default
-    private List<Director> directors = new ArrayList<>();
+
+    private List<Genre> genres;
 }
