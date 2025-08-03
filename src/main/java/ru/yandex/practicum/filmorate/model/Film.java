@@ -38,8 +38,8 @@ public class Film {
 
     @Builder.Default
     private Set<Integer> likes = new HashSet<>();
-
+    @Builder.Default
     private List<Genre> genres = new ArrayList<>();
-
+    @Builder.Default
     private List<Director> directors = new ArrayList<>();
 }

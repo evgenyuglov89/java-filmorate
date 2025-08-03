@@ -4,10 +4,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.storage.*;
-import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.storage.mappers.*;
 
 @TestConfiguration
 public class TestStorageConfig {
@@ -38,8 +35,10 @@ public class TestStorageConfig {
     }
 
     @Bean
-    public FilmStorage filmStorage(JdbcTemplate jdbcTemplate, FilmRowMapper mapper) {
-        return new FilmDbStorage(jdbcTemplate, mapper);
+    public FilmStorage filmStorage(JdbcTemplate jdbcTemplate,
+                                   FilmRowMapper filmMapper,
+                                   DirectorRowMapper directorMapper) {
+        return new FilmDbStorage(jdbcTemplate, filmMapper, directorMapper);
     }
 
     @Bean
