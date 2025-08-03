@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -97,8 +98,21 @@ public class FilmService {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
+
     public List<Film> getPopularWithFilters(Integer genreId, Integer year, Integer count) {
         int effectiveCount = (count == null) ? 10 : count;
         return filmStorage.getPopularWithFilters(genreId, year, effectiveCount);
+    }
+
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
+    public List<Film> search(String query, List<String> by) {
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("Поисковый запрос не может быть пустым");
+        }
+        log.info("Выполнен поиск фильмов");
+        return filmStorage.search(query.trim(), by);
     }
 }

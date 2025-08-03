@@ -60,6 +60,11 @@ public class FilmController {
         return filmService.getPopularWithFilters(genreId, year, count);
     }
 
+    @GetMapping("/search")
+    public List<Film> searchFilms(@RequestParam String query, @RequestParam List<String> by) {
+        return filmService.search(query, by);
+    }
+
     @DeleteMapping("/{filmId}")
     public void delete(@PathVariable int filmId) {
         filmService.delete(filmId);
@@ -71,5 +76,11 @@ public class FilmController {
             @RequestParam(defaultValue = "year") String sortBy
     ) {
         return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam int userId,
+                                     @RequestParam int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }
