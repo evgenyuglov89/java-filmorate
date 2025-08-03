@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -13,9 +15,11 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+    private final EventService eventService;
 
-    public UserService(@Qualifier("dbUserStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public User create(User user) {
@@ -53,6 +57,7 @@ public class UserService {
         }
 
         try {
+            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
             userStorage.addFriend(userId, friendId);
             log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
         } catch (IllegalStateException e) {
@@ -76,6 +81,7 @@ public class UserService {
         }
 
         try {
+            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
             userStorage.deleteFriend(userId, friendId);
             log.debug("Удалена дружба между userId={} и friendId={}", userId, friendId);
         } catch (IllegalStateException e) {

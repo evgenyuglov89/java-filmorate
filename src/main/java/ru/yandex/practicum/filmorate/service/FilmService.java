@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -17,12 +19,14 @@ import java.util.List;
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final EventService eventService;
 
     public FilmService(
             @Qualifier("dbFilmStorage") FilmStorage filmStorage,
-            @Qualifier("dbUserStorage") UserStorage userStorage) {
+            @Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public Film create(Film film) {
@@ -61,6 +65,8 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
 
         }
+
+        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.ADD);
         filmStorage.likeFilm(filmId, userId);
         log.info("Был поставлен лайк фильму с ID: {} пользователем с ID: {}", filmId, userId);
     }
@@ -77,6 +83,7 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
+        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
         filmStorage.removeLike(filmId, userId);
         log.info("Был удален лайк у фильма с ID: {} пользователем с ID: {}", filmId, userId);
     }
