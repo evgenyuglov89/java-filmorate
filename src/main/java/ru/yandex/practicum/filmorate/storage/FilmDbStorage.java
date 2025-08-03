@@ -81,6 +81,82 @@ public class FilmDbStorage implements FilmStorage {
     private static final String DELETE_LIKE =
             "DELETE FROM \"likes\" WHERE \"film_id\" = ? AND \"user_id\" = ?";
 
+    private static final String SEARCH_BY_TITLE = """
+    SELECT
+        f."id",
+        f."name",
+        f."description",
+        f."release_date" AS "releaseDate",
+        f."duration",
+        m."id" AS "mpa_id",
+        m."name" AS "mpa_name",
+        m."description" AS "mpa_description",
+        COUNT(l."user_id") AS "likes_count"
+    FROM "films" f
+    LEFT JOIN "film_directors" fd ON f."id" = fd."film_id"
+    LEFT JOIN "directors" d ON fd."director_id" = d."id"
+    LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+    LEFT JOIN "likes" l ON f."id" = l."film_id"
+    WHERE
+        LOWER(f."name") LIKE ?
+    GROUP BY
+        f."id", f."name", f."description",
+        f."release_date", f."duration",
+        m."id", m."name", m."description"
+    ORDER BY "likes_count" DESC
+    """;
+
+    private static final String SEARCH_BY_DIRECTOR = """
+    SELECT
+        f."id",
+        f."name",
+        f."description",
+        f."release_date" AS "releaseDate",
+        f."duration",
+        m."id" AS "mpa_id",
+        m."name" AS "mpa_name",
+        m."description" AS "mpa_description",
+        COUNT(l."user_id") AS "likes_count"
+    FROM "films" f
+    LEFT JOIN "film_directors" fd ON f."id" = fd."film_id"
+    LEFT JOIN "directors" d ON fd."director_id" = d."id"
+    LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+    LEFT JOIN "likes" l  ON f."id" = l."film_id"
+    WHERE
+        LOWER(d."name") LIKE ?
+    GROUP BY
+        f."id", f."name", f."description",
+        f."release_date", f."duration",
+        m."id", m."name", m."description"
+    ORDER BY "likes_count" DESC
+    """;
+
+    private static final String SEARCH_BY_BOTH = """
+    SELECT
+        f."id",
+        f."name",
+        f."description",
+        f."release_date" AS "releaseDate",
+        f."duration",
+        m."id" AS "mpa_id",
+        m."name" AS "mpa_name",
+        m."description" AS "mpa_description",
+        COUNT(l."user_id") AS "likes_count"
+    FROM "films" f
+    LEFT JOIN "film_directors" fd ON f."id" = fd."film_id"
+    LEFT JOIN "directors" d ON fd."director_id" = d."id"
+    LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+    LEFT JOIN "likes" l ON f."id" = l."film_id"
+    WHERE
+        LOWER(f."name") LIKE ?
+        OR LOWER(d."name") LIKE ?
+    GROUP BY
+        f."id", f."name", f."description",
+        f."release_date", f."duration",
+        m."id", m."name", m."description"
+    ORDER BY "likes_count" DESC
+    """;
+
     private static final String DELETE_FILM = """
             DELETE FROM "films" WHERE "id" = ?""";
 
@@ -311,6 +387,24 @@ public class FilmDbStorage implements FilmStorage {
             getGenresAndLikesAndDirectors(film);
         }
 
+        return films;
+    }
+
+    @Override
+    public List<Film> search(String query, List<String> by) {
+        String likePattern = "%" + query.trim().toLowerCase() + "%";
+
+        List<Film> films;
+
+        if (by.contains("title") && by.contains("director")) {
+            films = jdbc.query(SEARCH_BY_BOTH, mapper, likePattern, likePattern);
+        } else if (by.contains("title")) {
+            films = jdbc.query(SEARCH_BY_TITLE, mapper, likePattern);
+        } else {
+            films = jdbc.query(SEARCH_BY_DIRECTOR, mapper, likePattern);
+        }
+
+        films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
     }
 
