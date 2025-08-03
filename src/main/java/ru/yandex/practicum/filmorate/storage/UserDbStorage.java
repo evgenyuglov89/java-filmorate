@@ -41,7 +41,7 @@ public class UserDbStorage implements UserStorage {
     private static final String INSERT_NEW_FRIEND =
             "INSERT INTO \"friendship\" (\"user_id\", \"friend_id\", \"status\") VALUES (?, ?, ?)";
     private static final String UPDATE_USER =
-            "UPDATE \"users\" SET \"name\" = ?, \"login\" = ?, \"birthday\" = ? WHERE \"id\" = ?";
+            "UPDATE \"users\" SET \"name\" = ?, \"login\" = ?, \"email\" = ?, \"birthday\" = ? WHERE \"id\" = ?";
     private static final String DELETE_FRIENDS =
             "DELETE FROM \"friendship\" WHERE \"user_id\" = ? AND \"friend_id\" = ?";
     private static final String DELETE_USER = """
@@ -73,6 +73,7 @@ public class UserDbStorage implements UserStorage {
             jdbc.update(UPDATE_USER,
                     newUser.getName(),
                     newUser.getLogin(),
+                    newUser.getEmail(),
                     newUser.getBirthday(),
                     newUser.getId());
         } else {

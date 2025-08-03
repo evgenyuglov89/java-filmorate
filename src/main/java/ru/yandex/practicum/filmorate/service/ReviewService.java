@@ -33,10 +33,16 @@ public class ReviewService {
 
     public Review create(Review review) {
         if (review.getFilmId() == 0) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "filmId не передан");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "filmId не передан");
         }
         if (review.getUserId() == 0) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "userId не передан");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId не передан");
+        }
+        if (review.getContent() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "content не передан");
+        }
+        if (review.getIsPositive() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "isPositive должен быть передан");
         }
         Film existingFilm = filmStorage.findById(review.getFilmId());
         if (existingFilm == null) {

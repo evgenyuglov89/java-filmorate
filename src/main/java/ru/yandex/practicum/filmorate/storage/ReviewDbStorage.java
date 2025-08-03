@@ -54,7 +54,7 @@ public class ReviewDbStorage {
             KEY ("review_id", "user_id")
             VALUES (?, ?, ?)""";
     private static final String UPDATE_REVIEW = """
-            UPDATE "reviews" SET "film_id" = ?, "user_id" = ?,"content" = ?, "is_positive" = ? WHERE "id" = ?""";
+            UPDATE "reviews" SET "content" = ?, "is_positive" = ? WHERE "id" = ?""";
     private static final String DELETE_REVIEW_BY_ID = """
             DELETE FROM "reviews" WHERE "id" = ?""";
     private static final String DELETE_REVIEW_REACTION = """
@@ -74,6 +74,7 @@ public class ReviewDbStorage {
         }, keyHolder);
 
         Map<String, Object> keys = keyHolder.getKeys();
+
         if (keys == null || !keys.containsKey("id")) {
             throw new RuntimeException("Не удалось получить ID нового отзыва");
         }
@@ -94,15 +95,14 @@ public class ReviewDbStorage {
 
         if (count != null && count > 0) {
             jdbc.update(UPDATE_REVIEW,
-                    review.getFilmId(),
-                    review.getUserId(),
                     review.getContent(),
                     review.getIsPositive(),
                     review.getReviewId());
+
+            return jdbc.queryForObject(GET_REVIEWS_BY_ID, mapper, review.getReviewId());
         } else {
             throw new NotFoundException("Отзыв который вы пытаетесь обновить не существует " + review.getReviewId());
         }
-        return review;
     }
 
     public void delete(int id) {

@@ -18,12 +18,12 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Review create(@Valid @RequestBody Review review) {
+    public Review create(@RequestBody Review review) {
         return reviewService.create(review);
     }
 
     @PutMapping
-    public Review update(@Valid @RequestBody Review review) {
+    public Review update(@RequestBody Review review) {
         return reviewService.update(review);
     }
 

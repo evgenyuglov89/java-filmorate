@@ -10,20 +10,20 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.mappers.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Repository("dbFilmStorage")
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
-    private final FilmRowMapper mapper;
+    private final FilmRowMapper filmMapper;
+    private final DirectorRowMapper directorMapper;
     private static final String GET_COUNT_FILMS_BY_ID =
             "SELECT COUNT(*) FROM \"films\" WHERE \"id\" = ?";
     private static final String GET_COUNT_MPA_BY_ID =
@@ -34,6 +34,8 @@ public class FilmDbStorage implements FilmStorage {
             FROM "films" f
             LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
             WHERE f."id" = ?""";
+    private static final String GET_DIRECTOR_BY_ID = """
+            SELECT * FROM "directors" WHERE "id" = ?""";
     private static final String GET_LIKES_BY_FILM =
             "SELECT \"user_id\" FROM \"likes\" WHERE \"film_id\" = ?";
     private static final String GET_MPA_BY_FILM =
@@ -180,24 +182,20 @@ public class FilmDbStorage implements FilmStorage {
             """;
 
     private static final String GET_FILMS_BY_DIRECTOR_SORT_BY_LIKES = """
-                SELECT f."id",
-                       f."name",
-                       f."description",
-                       f."release_date" AS "releaseDate",
+                SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate",
                        f."duration",
-                       m."id" AS "mpa_id",
-                       m."name" AS "mpa_name",
-                       m."description" AS "mpa_description",
-                       COUNT(l."user_id") AS "likes_count"
+                       m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                       COALESCE(COUNT(l."user_id"), 0) AS likes_count
                 FROM "films" f
-                JOIN "likes" l1 ON f."id" = l1."film_id" AND l1."user_id" = ?
-                JOIN "likes" l2 ON f."id" = l2."film_id" AND l2."user_id" = ?
-                LEFT JOIN "likes" l ON f."id" = l."film_id"
+                JOIN "film_directors" fd ON f."id" = fd."film_id"
                 LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-                GROUP BY f."id", f."name", f."description", f."release_date", f."duration",\s
+                LEFT JOIN "likes" l ON f."id" = l."film_id"
+                WHERE fd."director_id" = ?
+                GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
                          m."id", m."name", m."description"
-                ORDER BY "likes_count" DESC;
+                ORDER BY likes_count DESC, f."id" ASC
             """;
+
     private static final String GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY = """
             SELECT f."id",
                     f."name",
@@ -213,7 +211,7 @@ public class FilmDbStorage implements FilmStorage {
              JOIN "likes" l2 ON f."id" = l2."film_id" AND l2."user_id" = ?
              LEFT JOIN "likes" l ON f."id" = l."film_id"
              LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-             GROUP BY f."id", f."name", f."description", f."release_date", f."duration",\s
+             GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
                       m."id", m."name", m."description"
              ORDER BY likes_count DESC;
             """;
@@ -284,34 +282,9 @@ public class FilmDbStorage implements FilmStorage {
         }
         film.setId(key.intValue());
 
-        List<Genre> genres = film.getGenres();
-        if (genres != null && !genres.isEmpty()) {
+        insertGenres(film);
 
-            ifGenreExists(genres);
-
-            Set<Integer> uniqueGenreIds = genres.stream()
-                    .map(Genre::getId)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-
-            List<Object[]> batchArgs = uniqueGenreIds.stream()
-                    .map(genreId -> new Object[]{film.getId(), genreId})
-                    .toList();
-
-            jdbc.batchUpdate(INSERT_FILM_GENRES, batchArgs);
-        }
-
-        List<Director> directors = film.getDirectors();
-        if (directors != null && !directors.isEmpty()) {
-            ifDirectorExists(directors);  // Метод проверяет, что такие режиссеры существуют (тебе нужно его реализовать)
-
-            Set<Integer> uniqueDirectorIds = directors.stream()
-                    .map(Director::getId)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            List<Object[]> batchDirectorArgs = uniqueDirectorIds.stream()
-                    .map(directorId -> new Object[]{film.getId(), directorId})
-                    .toList();
-            jdbc.batchUpdate(INSERT_FILM_DIRECTORS, batchDirectorArgs);
-        }
+        insertDirectors(film);
 
         return film;
     }
@@ -328,24 +301,25 @@ public class FilmDbStorage implements FilmStorage {
                     film.getDuration(),
                     film.getMpa().getId(),
                     film.getId());
-            List<Director> directors = film.getDirectors();
+
+            jdbc.update("DELETE FROM \"film_genres\" WHERE \"film_id\" = ?", film.getId());
             jdbc.update("DELETE FROM \"film_directors\" WHERE \"film_id\" = ?", film.getId());
 
-            if (directors != null && !directors.isEmpty()) {
-                ifDirectorExists(directors);
-
-                Set<Integer> uniqueDirectorIds = directors.stream()
-                        .map(Director::getId)
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-
-                List<Object[]> batchDirectorArgs = uniqueDirectorIds.stream()
-                        .map(directorId -> new Object[]{film.getId(), directorId})
-                        .toList();
-                jdbc.batchUpdate(INSERT_FILM_DIRECTORS, batchDirectorArgs);
+            if (film.getGenres() != null) {
+                List<Genre> distinctGenres = film.getGenres().stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(Genre::getId, g -> g, (g1, g2) -> g1, LinkedHashMap::new),
+                                map -> new ArrayList<>(map.values()))
+                        );
+                film.setGenres(distinctGenres);
             }
+            insertGenres(film);
+            insertDirectors(film);
         } else {
             throw new NotFoundException("Фильм который вы пытаетесь обновить не существует " + film.getId());
         }
+
         return film;
     }
 
@@ -353,7 +327,7 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> filmsList() {
         List<Film> filmsUpload = new ArrayList<>();
 
-        List<Film> films = jdbc.query(GET_ALL_FILMS, mapper);
+        List<Film> films = jdbc.query(GET_ALL_FILMS, filmMapper);
 
         for (Film film : films) {
             getGenresAndLikesAndDirectors(film);
@@ -365,52 +339,12 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film findById(int id) {
-        Film film = jdbc.query(GET_FILM_BY_ID, mapper, id)
+        Film film = jdbc.query(GET_FILM_BY_ID, filmMapper, id)
                 .stream()
                 .findAny()
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден"));
 
-        List<Genre> genres = jdbc.query(
-                GET_GENRES_BY_FILM_ID,
-                (rs, rowNum) -> new Genre(rs.getInt("id"), rs.getString("name")),
-                film.getId()
-        );
-
-        Map<Integer, Genre> uniqueGenres = genres.stream()
-                .collect(Collectors.toMap(
-                        Genre::getId,
-                        Function.identity(),
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
-
-        film.setGenres(new ArrayList<>(uniqueGenres.values()));
-
-        Mpa mpa = jdbc.queryForObject(
-                GET_MPA_BY_FILM,
-                (rs, rowNum) -> new Mpa(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("description")
-                ),
-                film.getMpa().getId()
-        );
-        film.setMpa(mpa);
-        List<Director> directors = jdbc.query(
-                GET_DIRECTORS_BY_FILM_ID,
-                (rs, rowNum) -> new Director(rs.getInt("id"), rs.getString("name")),
-                film.getId()
-        );
-
-        Map<Integer, Director> uniqueDirectors = directors.stream()
-                .collect(Collectors.toMap(
-                        Director::getId,
-                        Function.identity(),
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
-
-        film.setDirectors(new ArrayList<>(uniqueDirectors.values()));
+        getGenresAndLikesAndDirectors(film);
         return film;
     }
 
@@ -426,7 +360,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        List<Film> films = jdbc.query(GET_POPULAR_FILMS, new Object[]{count}, mapper);
+        List<Film> films = jdbc.query(GET_POPULAR_FILMS, new Object[]{count}, filmMapper);
 
         for (Film film : films) {
             getGenresAndLikesAndDirectors(film);
@@ -442,11 +376,11 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films;
 
         if (by.contains("title") && by.contains("director")) {
-            films = jdbc.query(SEARCH_BY_BOTH, mapper, likePattern, likePattern);
+            films = jdbc.query(SEARCH_BY_BOTH, filmMapper, likePattern, likePattern);
         } else if (by.contains("title")) {
-            films = jdbc.query(SEARCH_BY_TITLE, mapper, likePattern);
+            films = jdbc.query(SEARCH_BY_TITLE, filmMapper, likePattern);
         } else {
-            films = jdbc.query(SEARCH_BY_DIRECTOR, mapper, likePattern);
+            films = jdbc.query(SEARCH_BY_DIRECTOR, filmMapper, likePattern);
         }
 
         films.forEach(this::getGenresAndLikesAndDirectors);
@@ -589,15 +523,19 @@ public class FilmDbStorage implements FilmStorage {
 
     private List<Film> getRecommendations(int targetUserId, int similarUserId) {
         String sql = """
-                SELECT f."id", f."name", f."description", f."release_date", f."duration",
-                       f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
-                FROM "likes" l
-                JOIN "films" f ON f."id" = l."film_id"
-                JOIN "mpa_rating" m ON f."mpa_id" = m."id"
-                WHERE l."user_id" = ? AND l."film_id" NOT IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-                """;
+            SELECT f."id", f."name", f."description", f."release_date", f."duration",
+                   f."mpa_id", m."name" AS mpa_name, m."description" AS mpa_description
+            FROM "likes" l
+            JOIN "films" f ON f."id" = l."film_id"
+            JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            WHERE l."user_id" = ? AND l."film_id" NOT IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+            """;
 
-        return jdbc.query(sql, mapper, similarUserId, targetUserId);
+        List<Film> films = jdbc.query(sql, filmMapper, similarUserId, targetUserId);
+
+        films.forEach(this::getGenresAndLikesAndDirectors);
+
+        return films;
     }
 
     @Override
@@ -607,6 +545,11 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
+        Director director = jdbc.query(GET_DIRECTOR_BY_ID, directorMapper, directorId)
+                .stream()
+                .findAny()
+                .orElseThrow(() -> new NotFoundException("Директор с id = " + directorId + " не найден"));
+
         if (sortBy == null || sortBy.isBlank()) {
             sortBy = "year";
         } else {
@@ -619,7 +562,7 @@ public class FilmDbStorage implements FilmStorage {
             default -> GET_FILMS_BY_DIRECTOR_SORT_BY_YEAR;
         };
 
-        List<Film> films = jdbc.query(query, mapper, directorId);
+        List<Film> films = jdbc.query(query, filmMapper, directorId);
 
         if (films.isEmpty()) {
             return Collections.emptyList();
@@ -648,7 +591,7 @@ public class FilmDbStorage implements FilmStorage {
             throw new ValidationException("Необходимо указать genreId и/или year");
         }
 
-        List<Film> films = jdbc.query(sql, mapper, params);
+        List<Film> films = jdbc.query(sql, filmMapper, params);
         films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
     }
@@ -656,9 +599,43 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getCommonFilms(int userId, int friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY,
                 new Object[]{userId, friendId},
-                mapper);
+                filmMapper);
 
         films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
+    }
+
+    private void insertGenres(Film film) {
+        List<Genre> genres = film.getGenres();
+        if (genres != null && !genres.isEmpty()) {
+
+            ifGenreExists(genres);
+
+            Set<Integer> uniqueGenreIds = genres.stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            List<Object[]> batchArgs = uniqueGenreIds.stream()
+                    .map(genreId -> new Object[]{film.getId(), genreId})
+                    .toList();
+
+            jdbc.batchUpdate(INSERT_FILM_GENRES, batchArgs);
+        }
+    }
+
+    private void insertDirectors(Film film) {
+        List<Director> directors = film.getDirectors();
+        if (directors != null && !directors.isEmpty()) {
+            ifDirectorExists(directors);
+
+            Set<Integer> uniqueDirectorIds = directors.stream()
+                    .map(Director::getId)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            List<Object[]> batchDirectorArgs = uniqueDirectorIds.stream()
+                    .map(directorId -> new Object[]{film.getId(), directorId})
+                    .toList();
+            jdbc.batchUpdate(INSERT_FILM_DIRECTORS, batchDirectorArgs);
+        }
     }
 }
