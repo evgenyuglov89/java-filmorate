@@ -97,7 +97,6 @@ public class FilmService {
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
    
-    add-common-films
     public List<Film> getCommonFilms(int userId, int friendId) {
         return filmStorage.getCommonFilms(userId, friendId);
     }
