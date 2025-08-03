@@ -57,8 +57,8 @@ public class UserService {
         }
 
         try {
-            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
             userStorage.addFriend(userId, friendId);
+            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
             log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
         } catch (IllegalStateException e) {
             log.warn("Дружба уже существует: userId={}, friendId={}", userId, friendId);
@@ -81,8 +81,8 @@ public class UserService {
         }
 
         try {
-            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
             userStorage.deleteFriend(userId, friendId);
+            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
             log.debug("Удалена дружба между userId={} и friendId={}", userId, friendId);
         } catch (IllegalStateException e) {
             log.warn("Попытка удалить несуществующую дружбу: userId={}, friendId={}", userId, friendId);

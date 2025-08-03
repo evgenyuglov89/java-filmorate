@@ -66,8 +66,8 @@ public class FilmService {
 
         }
 
-        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.ADD);
         filmStorage.likeFilm(filmId, userId);
+        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.ADD);
         log.info("Был поставлен лайк фильму с ID: {} пользователем с ID: {}", filmId, userId);
     }
 
@@ -83,8 +83,8 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
         }
 
-        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
         filmStorage.removeLike(filmId, userId);
+        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
         log.info("Был удален лайк у фильма с ID: {} пользователем с ID: {}", filmId, userId);
     }
 

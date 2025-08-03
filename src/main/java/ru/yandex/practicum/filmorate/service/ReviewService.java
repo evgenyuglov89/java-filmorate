@@ -68,14 +68,15 @@ public class ReviewService {
             throw new NotFoundException("Отзыв с ID " + id + " не найден");
         }
 
-        eventService.logEvent(review.getUserId(), id, EventType.REVIEW, Operation.UPDATE);
-        return reviewDbStorage.update(review);
+        Review updated = reviewDbStorage.update(review);
+        eventService.logEvent(updated.getUserId(), updated.getReviewId(), EventType.REVIEW, Operation.UPDATE);
+        return updated;
     }
 
     public void delete(int id) {
         Review review = reviewDbStorage.findById(id);
-        eventService.logEvent(review.getUserId(), id, EventType.REVIEW, Operation.REMOVE);
         reviewDbStorage.delete(id);
+        eventService.logEvent(review.getUserId(), id, EventType.REVIEW, Operation.REMOVE);
     }
 
     public Review findById(int id) {
