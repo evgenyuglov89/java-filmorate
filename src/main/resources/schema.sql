@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS "events" (
     "entity_id" BIGINT NOT NULL,
     "type" VARCHAR(50) NOT NULL,
     "operation" VARCHAR(50) NOT NULL,
+    "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_events_user FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );

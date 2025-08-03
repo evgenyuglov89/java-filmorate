@@ -6,9 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -21,14 +19,16 @@ public class ReviewService {
     private final ReviewDbStorage reviewDbStorage;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final EventService eventService;
 
     public ReviewService(
             ReviewDbStorage reviewDbStorage,
             @Qualifier("dbFilmStorage") FilmStorage filmStorage,
-            @Qualifier("dbUserStorage") UserStorage userStorage) {
+            @Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
         this.reviewDbStorage = reviewDbStorage;
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.eventService = eventService;
     }
 
     public Review create(Review review) {
@@ -46,7 +46,11 @@ public class ReviewService {
         if (existingUser == null) {
             throw new NotFoundException("Пользователь с ID " + review.getUserId() + " не найден");
         }
-        return reviewDbStorage.save(review);
+
+        Review saved = reviewDbStorage.save(review);
+        eventService.logEvent(saved.getUserId(), saved.getReviewId(), EventType.REVIEW, Operation.ADD);
+
+        return saved;
     }
 
     public Review update(Review review) {
@@ -58,10 +62,13 @@ public class ReviewService {
             throw new NotFoundException("Отзыв с ID " + id + " не найден");
         }
 
+        eventService.logEvent(review.getUserId(), id, EventType.REVIEW, Operation.UPDATE);
         return reviewDbStorage.update(review);
     }
 
     public void delete(int id) {
+        Review review = reviewDbStorage.findById(id);
+        eventService.logEvent(review.getUserId(), id, EventType.REVIEW, Operation.REMOVE);
         reviewDbStorage.delete(id);
     }
 

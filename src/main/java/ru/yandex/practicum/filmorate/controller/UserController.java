@@ -2,8 +2,10 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.EventService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -15,10 +17,12 @@ public class UserController {
 
     private final UserService userService;
     private final FilmService filmService;
+    private final EventService eventService;
 
-    public UserController(UserService userService, FilmService filmService) {
+    public UserController(UserService userService, FilmService filmService, EventService eventService) {
         this.userService = userService;
         this.filmService = filmService;
+        this.eventService = eventService;
     }
 
     @PostMapping
@@ -69,5 +73,10 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public void delete(@PathVariable int userId) {
         userService.delete(userId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getFeed(@PathVariable int id) {
+        return eventService.getFeed(id);
     }
 }
