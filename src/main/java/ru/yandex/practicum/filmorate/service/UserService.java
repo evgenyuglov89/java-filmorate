@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -15,11 +13,9 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserStorage userStorage;
-    private final EventService eventService;
 
-    public UserService(@Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
+    public UserService(@Qualifier("dbUserStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
-        this.eventService = eventService;
     }
 
     public User create(User user) {
@@ -58,7 +54,6 @@ public class UserService {
 
         try {
             userStorage.addFriend(userId, friendId);
-            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
             log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
         } catch (IllegalStateException e) {
             log.warn("Дружба уже существует: userId={}, friendId={}", userId, friendId);
@@ -82,7 +77,6 @@ public class UserService {
 
         try {
             userStorage.deleteFriend(userId, friendId);
-            eventService.logEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
             log.debug("Удалена дружба между userId={} и friendId={}", userId, friendId);
         } catch (IllegalStateException e) {
             log.warn("Попытка удалить несуществующую дружбу: userId={}, friendId={}", userId, friendId);
@@ -116,13 +110,5 @@ public class UserService {
                 commonFriends.size(), userId, otherId);
 
         return commonFriends;
-    }
-
-    public User findById(int id) {
-        return userStorage.findById(id);
-    }
-
-    public void delete(int id) {
-        userStorage.delete(id);
     }
 }

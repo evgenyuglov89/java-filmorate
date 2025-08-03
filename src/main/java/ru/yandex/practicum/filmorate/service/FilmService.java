@@ -1,13 +1,10 @@
 package ru.yandex.practicum.filmorate.service;
 
-import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -19,14 +16,12 @@ import java.util.List;
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private final EventService eventService;
 
     public FilmService(
             @Qualifier("dbFilmStorage") FilmStorage filmStorage,
-            @Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
+            @Qualifier("dbUserStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
-        this.eventService = eventService;
     }
 
     public Film create(Film film) {
@@ -65,9 +60,7 @@ public class FilmService {
             throw new NotFoundException("Пользователь с ID " + userId + " не найден");
 
         }
-
         filmStorage.likeFilm(filmId, userId);
-        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.ADD);
         log.info("Был поставлен лайк фильму с ID: {} пользователем с ID: {}", filmId, userId);
     }
 
@@ -84,42 +77,11 @@ public class FilmService {
         }
 
         filmStorage.removeLike(filmId, userId);
-        eventService.logEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
         log.info("Был удален лайк у фильма с ID: {} пользователем с ID: {}", filmId, userId);
     }
 
     public List<Film> getPopularFilms(int count) {
         log.info("Был возвращён список фильмов в кол-ве: {}", count);
         return filmStorage.getPopularFilms(count);
-    }
-
-    public List<Film> getRecommendations(int userId) {
-        return filmStorage.getRecommendations(userId);
-    }
-
-    public void delete(int id) {
-        filmStorage.delete(id);
-    }
-
-    public List<Film> getFilmsByDirector(int directorId, String sortBy) {
-        return filmStorage.getFilmsByDirector(directorId, sortBy);
-    }
-
-
-    public List<Film> getPopularWithFilters(Integer genreId, Integer year, Integer count) {
-        int effectiveCount = (count == null) ? 10 : count;
-        return filmStorage.getPopularWithFilters(genreId, year, effectiveCount);
-    }
-
-    public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getCommonFilms(userId, friendId);
-    }
-
-    public List<Film> search(String query, List<String> by) {
-        if (query == null || query.isBlank()) {
-            throw new ValidationException("Поисковый запрос не может быть пустым");
-        }
-        log.info("Выполнен поиск фильмов");
-        return filmStorage.search(query.trim(), by);
     }
 }
