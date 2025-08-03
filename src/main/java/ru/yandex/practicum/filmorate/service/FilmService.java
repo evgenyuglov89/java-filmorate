@@ -98,6 +98,12 @@ public class FilmService {
         return filmStorage.getFilmsByDirector(directorId, sortBy);
     }
 
+
+    public List<Film> getPopularWithFilters(Integer genreId, Integer year, Integer count) {
+        int effectiveCount = (count == null) ? 10 : count;
+        return filmStorage.getPopularWithFilters(genreId, year, effectiveCount);
+    }
+
     public List<Film> getCommonFilms(int userId, int friendId) {
         return filmStorage.getCommonFilms(userId, friendId);
     }

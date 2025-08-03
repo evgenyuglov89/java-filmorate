@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -217,6 +218,50 @@ public class FilmDbStorage implements FilmStorage {
              ORDER BY likes_count DESC;
             """;
 
+    private static final String SQL_POPULAR_BY_GENRE = """
+            SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
+                   m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                   COUNT(l."user_id") AS "likes_count"
+            FROM "films" f
+            JOIN "film_genres" fg ON f."id" = fg."film_id"
+            LEFT JOIN "likes" l ON f."id" = l."film_id"
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            WHERE fg."genre_id" = ?
+            GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
+                  m."id", m."name", m."description"
+            ORDER BY "likes_count" DESC, f."id" ASC
+            LIMIT ?
+            """;
+
+    private static final String SQL_POPULAR_BY_YEAR = """
+            SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
+                   m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                   COUNT(l."user_id") AS "likes_count"
+            FROM "films" f
+            LEFT JOIN "likes" l ON f."id" = l."film_id"
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            WHERE EXTRACT(YEAR FROM f."release_date") = ?
+            GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
+                  m."id", m."name", m."description"
+            ORDER BY "likes_count" DESC, f."id" ASC
+            LIMIT ?
+            """;
+
+    private static final String GET_POPULAR_BY_GENRE_AND_YEAR = """
+            SELECT f."id", f."name", f."description", f."release_date" AS "releaseDate", f."duration",
+                   m."id" AS "mpa_id", m."name" AS "mpa_name", m."description" AS "mpa_description",
+                   COUNT(l."user_id") AS "likes_count"
+            FROM "films" f
+            JOIN "film_genres" fg ON f."id" = fg."film_id"
+            LEFT JOIN "likes" l ON f."id" = l."film_id"
+            LEFT JOIN "mpa_rating" m ON f."mpa_id" = m."id"
+            WHERE fg."genre_id" = ?
+            AND EXTRACT(YEAR FROM f."release_date") = ?
+            GROUP BY f."id", f."name", f."description", f."release_date", f."duration",
+                  m."id", m."name", m."description"
+            ORDER BY "likes_count" DESC, f."id" ASC
+            LIMIT ?;
+    """;
 
     @Override
     public Film save(Film film) {
@@ -555,10 +600,12 @@ public class FilmDbStorage implements FilmStorage {
         return jdbc.query(sql, mapper, similarUserId, targetUserId);
     }
 
+    @Override
     public void delete(int id) {
         jdbc.update(DELETE_FILM, id);
     }
 
+    @Override
     public List<Film> getFilmsByDirector(int directorId, String sortBy) {
         if (sortBy == null || sortBy.isBlank()) {
             sortBy = "year";
@@ -584,6 +631,28 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getPopularWithFilters(Integer genreId, Integer year, int limit) {
+        String sql;
+        Object[] params;
+
+        if (genreId != null && year != null) {
+            sql = GET_POPULAR_BY_GENRE_AND_YEAR;
+            params = new Object[]{ genreId, year, limit };
+        } else if (genreId != null) {
+            sql = SQL_POPULAR_BY_GENRE;
+            params = new Object[]{ genreId, limit };
+        } else if (year != null) {
+            sql = SQL_POPULAR_BY_YEAR;
+            params = new Object[]{ year, limit };
+        } else {
+            throw new ValidationException("Необходимо указать genreId и/или year");
+        }
+
+        List<Film> films = jdbc.query(sql, mapper, params);
+        films.forEach(this::getGenresAndLikesAndDirectors);
+        return films;
+    }
+
     public List<Film> getCommonFilms(int userId, int friendId) {
         List<Film> films = jdbc.query(GET_COMMON_FILMS_BY_USERS_SORTED_BY_POPULARITY,
                 new Object[]{userId, friendId},
@@ -592,5 +661,4 @@ public class FilmDbStorage implements FilmStorage {
         films.forEach(this::getGenresAndLikesAndDirectors);
         return films;
     }
-
 }
