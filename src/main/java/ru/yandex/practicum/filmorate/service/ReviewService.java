@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,8 +22,9 @@ public class ReviewService {
 
     public ReviewService(
             ReviewDbStorage reviewDbStorage,
-            @Qualifier("dbFilmStorage") FilmStorage filmStorage,
-            @Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
+            FilmStorage filmStorage,
+            UserStorage userStorage,
+            EventService eventService) {
         this.reviewDbStorage = reviewDbStorage;
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;

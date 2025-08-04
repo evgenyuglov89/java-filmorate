@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.EventType;
@@ -21,9 +20,7 @@ public class FilmService {
     private final UserStorage userStorage;
     private final EventService eventService;
 
-    public FilmService(
-            @Qualifier("dbFilmStorage") FilmStorage filmStorage,
-            @Qualifier("dbUserStorage") UserStorage userStorage, EventService eventService) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage, EventService eventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.eventService = eventService;

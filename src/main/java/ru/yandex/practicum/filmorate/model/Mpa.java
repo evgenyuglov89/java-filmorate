@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 public class Mpa {
 
-    private int id;
+    private Integer id;
 
     private String name;
 

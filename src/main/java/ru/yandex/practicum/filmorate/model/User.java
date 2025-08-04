@@ -19,7 +19,7 @@ import java.util.Set;
 @Builder
 public class User {
 
-    private int id;
+    private Integer id;
 
     @NotBlank(message = "Email не может быть пустым")
     @Email(message = "Некорректный формат email")
